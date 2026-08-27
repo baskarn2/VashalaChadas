@@ -8,7 +8,7 @@
         <footer class="footer text-center mt-5 py-3 border-top bg-light">
             <div class="container">
                 <span class="text-muted small">
-                    &copy; 2026 Balaji Baskaran &bull; <strong>विशालवृत्तावलिः (Viśālavṛttāvaliḥ)</strong> &bull; <a href="https://github.com/baskarn2/VashalaChadas" target="_blank"><i class="fab fa-github mr-1"></i>GitHub Repository</a>
+                    &copy; 2026 <strong>विशालवृत्तावलिः (Viśālavṛttāvaliḥ)</strong> &bull; <a href="https://github.com/baskarn2/VashalaChadas" target="_blank"><i class="fab fa-github mr-1"></i>GitHub Repository</a>
                 </span>
             </div>
         </footer>
@@ -55,7 +55,7 @@
                 const toggle_class = $toggle.data('custom-multi-toggle-class');
                 const $target = $($toggle.data('target'));
 
-                $target.on('show.bs.collapse', function(e) {
+                $target.on('show.bs.collapse hide.bs.collapse', function(e) {
                     if (e.target == e.delegateTarget) {
                         if ($toggle.text() == original_text) {
                             $toggle.text(toggle_text);

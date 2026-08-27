@@ -17,12 +17,14 @@ class TestWebAppRoutes(unittest.TestCase):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
         self.assertIn('विशालवृत्तावलिः'.encode('utf-8'), response.data)
-        self.assertIn(b'Balaji Baskaran', response.data)
+        self.assertIn(b'GitHub: baskarn2/VashalaChadas', response.data)
 
     def test_about_page(self):
         response = self.client.get('/about')
         self.assertEqual(response.status_code, 200)
         self.assertIn('विशालवृत्तावलिः'.encode('utf-8'), response.data)
+        self.assertIn('Akṣaragaṇa-vṛtta'.encode('utf-8'), response.data)
+        self.assertIn('Mātrā-vṛtta'.encode('utf-8'), response.data)
 
     def test_compose_page_get(self):
         response = self.client.get('/compose')
