@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Chandojñānam Local Application Launcher.
+विशालवृत्तावलिः (Viśālavṛttāvaliḥ) Application Launcher.
 
 Usage:
     python run.py
@@ -30,7 +30,7 @@ def open_browser_later(url: str, delay: float = 1.0):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Chandojñānam Local Web Application")
+    parser = argparse.ArgumentParser(description="Run विशालवृत्तावलिः (Viśālavṛttāvaliḥ) Web Application")
     parser.add_argument("--host", default="127.0.0.1", help="Host address (default: 127.0.0.1)")
     parser.add_argument("--port", type=int, default=5000, help="Port number (default: 5000)")
     parser.add_argument("--no-browser", action="store_true", help="Do not automatically open browser")
@@ -39,11 +39,12 @@ def main():
     args = parser.parse_args()
 
     url = f"http://{args.host}:{args.port}"
-    print("=" * 60)
-    print("  Chandojñānam (छन्दोज्ञानम्) - Local Web Application")
+    print("=" * 65)
+    print("  विशालवृत्तावलिः (Viśālavṛttāvaliḥ) - Sanskrit Prosody Suite")
+    print("  Author: Balaji Baskaran")
     print(f"  Access URL: {url}")
     print("  Press Ctrl+C to stop the server")
-    print("=" * 60)
+    print("=" * 65)
 
     if not args.no_browser and not args.debug:
         open_browser_later(url)

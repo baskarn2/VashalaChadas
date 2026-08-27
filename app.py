@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Chandojñānam Local Web Application Server.
+विशालवृत्तावलिः (Viśālavṛttāvaliḥ) - Sanskrit Prosody & Poetic Composition Suite.
 
-A standalone Flask application providing Sanskrit meter identification,
-syllable scansion, fuzzy matching, OCR image recognition, and batch analysis.
+Author: Balaji Baskaran (GitHub: baskarn2)
 """
 
 import os
@@ -20,7 +19,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from indic_transliteration import sanscript
-from core.chanda import Chanda
+from core.chanda import Chanda, STANDARD_METER_TEMPLATES
 
 # Base directory
 BASE_DIR = pathlib.Path(__file__).resolve().parent
@@ -41,11 +40,11 @@ CHANDA = Chanda(data_path=str(DATA_DIR))
 
 # Create Flask Web Application
 app = Flask(
-    "Chandojñānam",
+    "विशालवृत्तावलिः",
     template_folder=str(BASE_DIR / "templates"),
     static_folder=str(BASE_DIR / "static")
 )
-app.secret_key = os.environ.get("SECRET_KEY", "chandojnanam_local_secret_key_2026")
+app.secret_key = os.environ.get("SECRET_KEY", "vishalavrttavalih_secret_key_2026")
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB limit
 
 
@@ -98,13 +97,13 @@ def transliterate_filter(text, scheme):
 @app.route('/', strict_slashes=False)
 def home():
     """Home / About page."""
-    data = {'title': 'About Chandojñānam'}
+    data = {'title': 'About विशालवृत्तावलिः'}
     return render_template('about.html', data=data)
 
 
 @app.route('/about', strict_slashes=False)
 def show_about():
-    data = {'title': 'About Chandojñānam'}
+    data = {'title': 'About विशालवृत्तावलिः'}
     return render_template('about.html', data=data)
 
 
@@ -145,6 +144,17 @@ def identify_from_text():
     return render_template('text.html', data=data)
 
 
+@app.route('/compose', methods=['GET', 'POST'], strict_slashes=False)
+def show_compose():
+    """Poetic Composition Assistant (काव्यसहायकः)."""
+    data = {
+        'title': 'काव्यसहायकः &bull; Poetic Composition Studio',
+        'meter_catalog': STANDARD_METER_TEMPLATES,
+        'output_scheme': ''
+    }
+    return render_template('compose.html', data=data)
+
+
 @app.route('/image', methods=['GET', 'POST'], strict_slashes=False)
 def identify_from_image():
     """Image-based OCR meter identification."""
@@ -177,30 +187,26 @@ def identify_from_image():
             filepath = PHOTOS_DIR / filename
             image_file.save(str(filepath))
 
-            # Encode image to base64 for browser preview
             with open(str(filepath), 'rb') as img_f:
                 image_base64 = base64.b64encode(img_f.read()).decode('utf-8')
             data['image'] = image_base64
 
-            # Attempt OCR
             if ocr_engine == 'tesseract':
                 try:
                     import pytesseract
                     from PIL import Image
                     img = Image.open(str(filepath))
                     try:
-                        # Attempt Sanskrit and regional language models
                         extracted = pytesseract.image_to_string(img, lang='san+mar+hin+ben+tel+guj+tam+mal+kan')
                     except Exception:
-                        # Fallback to default language
                         extracted = pytesseract.image_to_string(img)
                     data['text'] = extracted.strip()
                     if not data['text']:
-                        flash("OCR completed but did not detect recognizable text. You can type or edit the text directly.", "info")
+                        flash("OCR completed but did not detect recognizable text. You can edit the text directly.", "info")
                     else:
                         flash("OCR successfully extracted text from image.", "success")
                 except Exception as e:
-                    flash(f"Tesseract OCR is not installed or configured on the system ({e}). You can edit the text box manually below.", "warning")
+                    flash(f"Tesseract OCR system unavailable ({e}). You can type or paste the text manually below.", "warning")
 
         if data.get('text'):
             try:
@@ -308,7 +314,7 @@ def feedback():
 
     return jsonify({
         'success': True,
-        'message': 'Thank you! Your feedback has been saved locally.'
+        'message': 'Thank you! Your feedback has been recorded.'
     })
 
 
@@ -347,8 +353,34 @@ def api_analyze():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/compose-check', methods=['POST'])
+def api_compose_check():
+    """REST API endpoint for live syllable verification during composition."""
+    payload = request.get_json(force=True, silent=True) or {}
+    meter_name = payload.get('meter', 'इन्द्रवज्रा')
+    text = payload.get('text', '')
+
+    eval_result = CHANDA.evaluate_composition(meter_name, text)
+    if 'error' in eval_result:
+        return jsonify({'success': False, 'error': eval_result['error']}), 400
+
+    return jsonify({
+        'success': True,
+        'data': eval_result
+    })
+
+
+@app.route('/api/meters', methods=['GET'])
+def api_meters():
+    """Return dictionary of standard meter templates."""
+    return jsonify({
+        'success': True,
+        'meters': STANDARD_METER_TEMPLATES
+    })
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     host = os.environ.get('HOST', '127.0.0.1')
-    print(f"Starting Chandojñānam Local Server on http://{host}:{port}")
+    print(f"Starting विशालवृत्तावलिः (Viśālavṛttāvaliḥ) on http://{host}:{port}")
     app.run(host=host, port=port, debug=True)

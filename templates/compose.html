@@ -1,0 +1,504 @@
+{% set active_page = "compose" -%}
+{% include "header.html" %}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+            <!-- Header Card -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div>
+                            <h3 class="font-weight-bold text-primary mb-1">
+                                <i class="fas fa-feather-alt mr-2"></i>काव्यसहायकः &bull; Poetic Composition Studio
+                            </h3>
+                            <p class="text-muted small mb-0">
+                                Meter-guided Sanskrit verse composer with real-time Laghu-Guru verification and syllable prompts (पादपूर्ति-सहायकः).
+                            </p>
+                        </div>
+                        <div class="mt-2 mt-md-0">
+                            {% include "output_scheme_selector.html" %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meter Selector & Blueprint Card -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <span class="font-weight-bold text-dark"><i class="fas fa-bullseye mr-2 text-primary"></i>Target Meter (छन्दो-निर्वाचनम्)</span>
+                    <span class="badge badge-pill badge-primary px-3 py-1" id="active-meter-badge">इन्द्रवज्रा (11 Akṣaras)</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-5 mb-2 mb-md-0">
+                            <label for="meter-select" class="font-weight-bold small text-muted text-uppercase">Select Meter:</label>
+                            <select id="meter-select" class="form-control custom-select">
+                                <option value="इन्द्रवज्रा" selected>इन्द्रवज्रा (Indravajrā - 11 Syllables)</option>
+                                <option value="उपेन्द्रवज्रा">उपेन्द्रवज्रा (Upendravajrā - 11 Syllables)</option>
+                                <option value="उपजाति">उपजाति (Upajāti - 11 Syllables Hybrid)</option>
+                                <option value="अनुष्टुभ्">अनुष्टुभ् (Anuṣṭubh / Śloka - 8 Syllables)</option>
+                                <option value="शालिनी">शालिनी (Śālinī - 11 Syllables)</option>
+                                <option value="रथोद्धता">रथोद्धता (Rathoddhatā - 11 Syllables)</option>
+                                <option value="वंशस्थ">वंशस्थ (Vaṃśastha - 12 Syllables)</option>
+                                <option value="भुजङ्गप्रयात">भुजङ्गप्रयात (Bhujaṅgaprayāta - 12 Syllables)</option>
+                                <option value="द्रुतविलम्बित">द्रुतविलम्बित (Drutavilambita - 12 Syllables)</option>
+                                <option value="तोटक">तोटक (Toṭaka - 12 Syllables)</option>
+                                <option value="वसन्ततिलका">वसन्ततिलका (Vasantatilakā - 14 Syllables)</option>
+                                <option value="मालिनी">मालिनी (Mālinī - 15 Syllables)</option>
+                                <option value="शिखरिणी">शिखरिणी (Śikhariṇī - 17 Syllables)</option>
+                                <option value="मन्दाक्रान्ता">मन्दाक्रान्ता (Mandākrāntā - 17 Syllables)</option>
+                                <option value="शार्दूलविक्रीडित">शार्दूलविक्रीडित (Śārdūlavikrīḍita - 19 Syllables)</option>
+                                <option value="स्रग्धरा">स्रग्धरा (Sragdharā - 21 Syllables)</option>
+                                <option value="आर्या">आर्या (Āryā - Mātrā-vṛtta)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="font-weight-bold small text-muted text-uppercase d-block">Quick Presets:</label>
+                            <div class="btn-group btn-group-sm flex-wrap" role="group">
+                                <button type="button" class="btn btn-outline-secondary meter-preset-btn" data-meter="अनुष्टुभ्">अनुष्टुभ् (8)</button>
+                                <button type="button" class="btn btn-outline-secondary meter-preset-btn" data-meter="इन्द्रवज्रा">इन्द्रवज्रा (11)</button>
+                                <button type="button" class="btn btn-outline-secondary meter-preset-btn" data-meter="उपजाति">उपजाति (11)</button>
+                                <button type="button" class="btn btn-outline-secondary meter-preset-btn" data-meter="भुजङ्गप्रयात">भुजङ्गप्रयात (12)</button>
+                                <button type="button" class="btn btn-outline-secondary meter-preset-btn" data-meter="वसन्ततिलका">वसन्ततिलका (14)</button>
+                                <button type="button" class="btn btn-outline-secondary meter-preset-btn" data-meter="मन्दाक्रान्ता">मन्दाक्रान्ता (17)</button>
+                                <button type="button" class="btn btn-outline-secondary meter-preset-btn" data-meter="शार्दूलविक्रीडित">शार्दूलविक्रीडित (19)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Meter Information Box -->
+                    <div id="meter-info-box" class="p-3 bg-light rounded border">
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <span class="text-muted small font-weight-bold text-uppercase">Gaṇa Lakṣaṇa:</span>
+                                <div id="tpl-gana" class="font-weight-bold text-primary font-size-lg">त त ज ग ग</div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <span class="text-muted small font-weight-bold text-uppercase">Syllables (Akṣaras):</span>
+                                <div id="tpl-syl-count" class="font-weight-bold text-dark">11 per pada</div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <span class="text-muted small font-weight-bold text-uppercase">Yati (Caesura):</span>
+                                <div id="tpl-yati" class="font-weight-bold text-info">5, 6 (11)</div>
+                            </div>
+                            <div class="col-12 mt-1">
+                                <span class="text-muted small font-weight-bold text-uppercase">Target Syllable Pattern:</span>
+                                <div id="tpl-pattern-display" class="sanskrit-text p-2 bg-white rounded border font-weight-bold text-success">ग ग ल | ग ग ल | ल ग ल | ग ग</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verse Composition Studio -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <span class="font-weight-bold text-dark"><i class="fas fa-pen-nib mr-2 text-primary"></i>Compose 4 Pādas (श्लोक-रचना)</span>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-danger mr-2" id="btn-clear-all">
+                            <i class="fas fa-trash-alt mr-1"></i> Clear All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-load-sample">
+                            <i class="fas fa-lightbulb mr-1"></i> Load Example Verse
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Pada 1 -->
+                    <div class="pada-block mb-4 p-3 border rounded bg-white shadow-sm" id="pada-block-1">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge badge-secondary">Pāda 1 (प्रथमः पादः)</span>
+                            <span class="pada-status small font-weight-bold" id="pada-status-1">Start typing...</span>
+                        </div>
+                        <div class="form-group mb-2">
+                            <input type="text" class="form-control sanskrit-text pada-input" id="pada-input-1" placeholder="Type 1st pada here..." autocomplete="off">
+                        </div>
+                        <!-- Live Syllable Slots & Prompt -->
+                        <div class="slots-container d-flex flex-wrap align-items-center mt-2 p-2 bg-light rounded" id="slots-1">
+                            <span class="text-muted small mr-2">Target Blueprint:</span>
+                            <div class="slots-badges" id="slots-badges-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pada 2 -->
+                    <div class="pada-block mb-4 p-3 border rounded bg-white shadow-sm" id="pada-block-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge badge-secondary">Pāda 2 (द्वितीयः पादः)</span>
+                            <span class="pada-status small font-weight-bold" id="pada-status-2">Pending...</span>
+                        </div>
+                        <div class="form-group mb-2">
+                            <input type="text" class="form-control sanskrit-text pada-input" id="pada-input-2" placeholder="Type 2nd pada here..." autocomplete="off">
+                        </div>
+                        <div class="slots-container d-flex flex-wrap align-items-center mt-2 p-2 bg-light rounded" id="slots-2">
+                            <span class="text-muted small mr-2">Target Blueprint:</span>
+                            <div class="slots-badges" id="slots-badges-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pada 3 -->
+                    <div class="pada-block mb-4 p-3 border rounded bg-white shadow-sm" id="pada-block-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge badge-secondary">Pāda 3 (तृतीयः पादः)</span>
+                            <span class="pada-status small font-weight-bold" id="pada-status-3">Pending...</span>
+                        </div>
+                        <div class="form-group mb-2">
+                            <input type="text" class="form-control sanskrit-text pada-input" id="pada-input-3" placeholder="Type 3rd pada here..." autocomplete="off">
+                        </div>
+                        <div class="slots-container d-flex flex-wrap align-items-center mt-2 p-2 bg-light rounded" id="slots-3">
+                            <span class="text-muted small mr-2">Target Blueprint:</span>
+                            <div class="slots-badges" id="slots-badges-3"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pada 4 -->
+                    <div class="pada-block mb-4 p-3 border rounded bg-white shadow-sm" id="pada-block-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge badge-secondary">Pāda 4 (चतुर्थः पादः)</span>
+                            <span class="pada-status small font-weight-bold" id="pada-status-4">Pending...</span>
+                        </div>
+                        <div class="form-group mb-2">
+                            <input type="text" class="form-control sanskrit-text pada-input" id="pada-input-4" placeholder="Type 4th pada here..." autocomplete="off">
+                        </div>
+                        <div class="slots-container d-flex flex-wrap align-items-center mt-2 p-2 bg-light rounded" id="slots-4">
+                            <span class="text-muted small mr-2">Target Blueprint:</span>
+                            <div class="slots-badges" id="slots-badges-4"></div>
+                        </div>
+                    </div>
+
+                    <!-- Action Bar -->
+                    <div class="d-flex justify-content-between align-items-center flex-wrap mt-4 pt-3 border-top">
+                        <div>
+                            <button type="button" class="btn btn-success px-4 mr-2 shadow-sm" id="btn-copy-verse">
+                                <i class="fas fa-copy mr-1"></i> Copy Full Verse
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-send-to-analyzer">
+                                <i class="fas fa-external-link-alt mr-1"></i> Open in Full Analyzer
+                            </button>
+                        </div>
+                        <div class="mt-2 mt-md-0 font-weight-bold text-dark" id="overall-verse-status">
+                            Verse Status: <span class="badge badge-info">In Progress</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+.slot-pill {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    margin: 0.15rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.slot-match {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #10b981;
+}
+.slot-mismatch {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #ef4444;
+}
+.slot-next {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 2px dashed #f59e0b;
+    animation: pulse-glow 1.5s infinite;
+}
+.slot-empty {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    border: 1px dashed #d1d5db;
+}
+@keyframes pulse-glow {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+</style>
+
+<script>
+const METER_DATA = {{ data.meter_catalog | tojson }};
+
+const SAMPLE_VERSES = {
+    "इन्द्रवज्रा": [
+        "लोकाभिरामं रणरङ्गधीरं",
+        "राजीवनेत्रं रघुवंशनाथम्।",
+        "कारुण्यरूपं करुणाकरं तं",
+        "श्रीरामचन्द्रं शरणं प्रपद्ये॥"
+    ],
+    "उपेन्द्रवज्रा": [
+        "उपेन्द्रवज्रा प्रथमे लघौ सा",
+        "ततस्तु तौ तौ जगती जगौ गः।",
+        "सदा प्रसन्ना वरदा शुभाङ्गी",
+        "सरस्वती नः कुलदेवतास्तु॥"
+    ],
+    "उपजाति": [
+        "अस्त्युत्तरस्यां दिशि देवतात्मा",
+        "हिमालयो नाम नगाधिराजः।",
+        "पूर्वापरौ वारिनिधी विगाह्य",
+        "स्थितः पृथिव्या इव मानदण्डः॥"
+    ],
+    "अनुष्टुभ्": [
+        "को न्वस्मिन् साम्प्रतं लोके",
+        "गुणवान् कश्च वीर्यवान्।",
+        "धर्मज्ञश्च कृतज्ञश्च",
+        "सत्यवाक्यो दृढव्रतः॥"
+    ],
+    "भुजङ्गप्रयात": [
+        "नमस्ते सदा वत्सले मातृभूमे",
+        "त्वया हिन्दुभूमे सुखं वर्धितोऽहम्।",
+        "महामङ्गले पुण्यभूमे त्वदर्थे",
+        "पतत्वेष कायो नमस्ते नमस्ते॥"
+    ],
+    "वसन्ततिलका": [
+        "योऽन्तः प्रविश्य मम वाचमिमां प्रसुप्तां",
+        "सञ्जीवयत्यखिलशक्तिधरः स्वधाम्ना।",
+        "अन्यांश्च हस्तचरणश्रवणत्वगादीन्",
+        "प्राणान्नमो भगवते पुरुषाय तुभ्यम्॥"
+    ],
+    "मन्दाक्रान्ता": [
+        "कश्चित्कान्ताविरहगुरुणा स्वाधिकारात्प्रमत्तः",
+        "शापेनास्तङ्गमितमहिमा वर्षभोग्येण भर्तुः।",
+        "यक्षश्चक्रे जनकतनयास्नानपुण्योदकेषु",
+        "स्निग्धच्छायातरुषु वसतिं रामगिर्याश्रमेशु॥"
+    ],
+    "शार्दूलविक्रीडित": [
+        "विद्या नाम नरस्य रूपमधिकं प्रच्छन्नगुप्तं धनम्",
+        "विद्या भोगकरी यशः सुखकरी विद्या गुरूणां गुरुः।",
+        "विद्या बन्धुजनो विदेशगमने विद्या परा देवता",
+        "विद्या राजसु पूज्यते न हि धनं विद्याविहीनः पशुः॥"
+    ]
+};
+
+let currentMeterKey = "इन्द्रवज्रा";
+
+function updateMeterDetails(meterKey) {
+    currentMeterKey = meterKey;
+    const tpl = METER_DATA[meterKey];
+    if (!tpl) return;
+
+    $('#active-meter-badge').text(`${tpl.name}`);
+    $('#tpl-gana').text(tpl.gana);
+    $('#tpl-syl-count').text(`${tpl.syllables ? tpl.syllables + ' per pada' : 'Mātrā-vṛtta'}`);
+    $('#tpl-yati').text(tpl.yati);
+    $('#tpl-pattern-display').text(tpl.pattern_display);
+
+    // Re-evaluate all 4 padas
+    for (let p = 1; p <= 4; p++) {
+        evaluatePada(p);
+    }
+}
+
+function evaluatePada(padaIndex) {
+    const text = $(`#pada-input-${padaIndex}`).val().trim();
+    const tpl = METER_DATA[currentMeterKey];
+    if (!tpl) return;
+
+    const pattern = tpl.pattern || "";
+    const targetLG = pattern.replace(/L/g, 'ल').replace(/G/g, 'ग');
+    const targetLen = pattern.length;
+
+    if (!text) {
+        $(`#pada-status-${padaIndex}`).html('<span class="text-muted">Empty (0/' + targetLen + ')</span>');
+        renderSlots(padaIndex, [], targetLG, null, targetLen);
+        checkOverallStatus();
+        return;
+    }
+
+    // Call validation API
+    $.ajax({
+        url: "{{url_for('api_compose_check')}}",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({
+            meter: currentMeterKey,
+            text: text
+        }),
+        success: function(resp) {
+            if (resp && resp.success) {
+                const data = resp.data;
+                const syls = data.syllables || [];
+                const currLG = data.current_lg || [];
+                const matches = data.matches || [];
+                const mismatches = data.mismatches || [];
+                const nextExp = data.next_expected;
+                const remaining = data.remaining;
+                const complete = data.complete;
+
+                if (complete) {
+                    $(`#pada-status-${padaIndex}`).html('<span class="text-success font-weight-bold"><i class="fas fa-check-circle mr-1"></i>Perfect Match! (' + syls.length + '/' + targetLen + ')</span>');
+                } else if (mismatches.length > 0) {
+                    $(`#pada-status-${padaIndex}`).html('<span class="text-danger font-weight-bold"><i class="fas fa-exclamation-circle mr-1"></i>Weight Mismatch (' + syls.length + '/' + targetLen + ')</span>');
+                } else {
+                    $(`#pada-status-${padaIndex}`).html('<span class="text-primary font-weight-bold"><i class="fas fa-spinner fa-spin mr-1"></i>In Progress (' + syls.length + '/' + targetLen + ') - Need ' + remaining + ' more</span>');
+                }
+
+                renderSlots(padaIndex, currLG, targetLG, nextExp, targetLen, syls, matches, mismatches);
+                checkOverallStatus();
+            }
+        }
+    });
+}
+
+function renderSlots(padaIndex, currLG, targetLG, nextExp, targetLen, syls, matches, mismatches) {
+    const $container = $(`#slots-badges-${padaIndex}`);
+    $container.empty();
+
+    matches = matches || [];
+    mismatches = mismatches || [];
+    syls = syls || [];
+
+    for (let i = 0; i < targetLen; i++) {
+        const expLG = targetLG[i] || 'ल';
+        const expLabel = (expLG === '-' ? 'ल/ग' : expLG);
+
+        if (i < currLG.length) {
+            const actualLG = currLG[i];
+            const sylText = syls[i] || '';
+            const isMatch = matches.includes(i);
+            const badgeClass = isMatch ? 'slot-match' : 'slot-mismatch';
+            const icon = isMatch ? '✓' : '✗';
+
+            $container.append(`
+                <span class="slot-pill ${badgeClass}" title="Syllable ${i+1}: ${sylText} (${actualLG}) - Expected: ${expLabel}">
+                    <strong>${sylText || actualLG}</strong> [${actualLG}] <small>${icon}</small>
+                </span>
+            `);
+        } else if (i === currLG.length) {
+            $container.append(`
+                <span class="slot-pill slot-next" title="Next expected syllable: ${expLabel}">
+                    Slot ${i+1}: <strong>Next ${expLabel}</strong>
+                </span>
+            `);
+        } else {
+            $container.append(`
+                <span class="slot-pill slot-empty" title="Slot ${i+1}: Expected ${expLabel}">
+                    Slot ${i+1} (${expLabel})
+                </span>
+            `);
+        }
+    }
+
+    // If extra syllables exist beyond target length
+    if (currLG.length > targetLen) {
+        for (let i = targetLen; i < currLG.length; i++) {
+            const sylText = syls[i] || '';
+            $container.append(`
+                <span class="slot-pill slot-mismatch" title="Extra Syllable ${i+1}: ${sylText}">
+                    ${sylText} [Extra ✗]
+                </span>
+            `);
+        }
+    }
+}
+
+function checkOverallStatus() {
+    let completedCount = 0;
+    for (let p = 1; p <= 4; p++) {
+        if ($(`#pada-status-${p}`).text().includes('Perfect Match')) {
+            completedCount++;
+        }
+    }
+    if (completedCount === 4) {
+        $('#overall-verse-status').html('Verse Status: <span class="badge badge-success font-size-lg"><i class="fas fa-trophy mr-1"></i>Complete 4-Pada Verse!</span>');
+    } else {
+        $('#overall-verse-status').html(`Verse Status: <span class="badge badge-info">${completedCount}/4 Pādas Validated</span>`);
+    }
+}
+
+$(document).ready(function() {
+    // Meter select change
+    $('#meter-select').change(function() {
+        updateMeterDetails($(this).val());
+    });
+
+    // Preset button click
+    $('.meter-preset-btn').click(function() {
+        const meter = $(this).data('meter');
+        $('#meter-select').val(meter).trigger('change');
+    });
+
+    // Real-time input listener with 150ms debounce
+    let debounceTimer;
+    $('.pada-input').on('input', function() {
+        clearTimeout(debounceTimer);
+        const padaId = $(this).attr('id').replace('pada-input-', '');
+        debounceTimer = setTimeout(function() {
+            evaluatePada(padaId);
+        }, 150);
+    });
+
+    // Clear all
+    $('#btn-clear-all').click(function() {
+        $('.pada-input').val('');
+        for (let p = 1; p <= 4; p++) {
+            evaluatePada(p);
+        }
+    });
+
+    // Load sample verse
+    $('#btn-load-sample').click(function() {
+        const sample = SAMPLE_VERSES[currentMeterKey] || SAMPLE_VERSES["इन्द्रवज्रा"];
+        if (sample) {
+            for (let i = 0; i < 4; i++) {
+                $(`#pada-input-${i+1}`).val(sample[i] || '');
+                evaluatePada(i+1);
+            }
+            if ($.notify) {
+                $.notify({ message: `Loaded classic sample for ${currentMeterKey}!` }, { type: "info" });
+            }
+        }
+    });
+
+    // Copy full verse
+    $('#btn-copy-verse').click(function() {
+        const lines = [];
+        for (let p = 1; p <= 4; p++) {
+            const txt = $(`#pada-input-${p}`).val().trim();
+            if (txt) lines.push(txt);
+        }
+        if (lines.length === 0) {
+            if ($.notify) $.notify({ message: "Please compose some verse lines first!" }, { type: "warning" });
+            return;
+        }
+        const fullVerse = lines.join('\n');
+        navigator.clipboard.writeText(fullVerse).then(function() {
+            if ($.notify) {
+                $.notify({ message: "Full 4-pada verse copied to clipboard!" }, { type: "success" });
+            } else {
+                alert("Verse copied!");
+            }
+        });
+    });
+
+    // Open in analyzer
+    $('#btn-send-to-analyzer').click(function() {
+        const lines = [];
+        for (let p = 1; p <= 4; p++) {
+            const txt = $(`#pada-input-${p}`).val().trim();
+            if (txt) lines.push(txt);
+        }
+        if (lines.length === 0) return;
+        
+        const form = $('<form action="{{url_for('identify_from_text')}}" method="POST"></form>');
+        form.append(`<input type="hidden" name="input_text" value="${lines.join('\n')}">`);
+        form.append('<input type="hidden" name="text_mode" value="verse">');
+        $('body').append(form);
+        form.submit();
+    });
+
+    // Initial render
+    updateMeterDetails("इन्द्रवज्रा");
+});
+</script>
+
+{% include "footer.html" %}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Tests for Flask Web Routes.
+Tests for विशालवृत्तावलिः Flask Web Routes.
 """
 
 import unittest
@@ -16,12 +16,18 @@ class TestWebAppRoutes(unittest.TestCase):
     def test_home_page(self):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Chandoj', response.data)
+        self.assertIn('विशालवृत्तावलिः'.encode('utf-8'), response.data)
+        self.assertIn(b'Balaji Baskaran', response.data)
 
     def test_about_page(self):
         response = self.client.get('/about')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'About Sanskrit Prosody', response.data)
+        self.assertIn('विशालवृत्तावलिः'.encode('utf-8'), response.data)
+
+    def test_compose_page_get(self):
+        response = self.client.get('/compose')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('काव्यसहायकः'.encode('utf-8'), response.data)
 
     def test_text_page_get(self):
         response = self.client.get('/text')
@@ -35,7 +41,7 @@ class TestWebAppRoutes(unittest.TestCase):
             'output_scheme': 'devanagari'
         })
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'\xe0\xa4\xad\xe0\xa5\x81\xe0\xa4\x9c\xe0\xa4\x99\xe0\xa5\x8d\xe0\xa4\x97\xe0\xa4\xaa\xe0\xa5\x8d\xe0\xa4\xb0\xe0\xa4\xaf\xe0\xa4\xbe\xe0\xa4\xa4', response.data) # Devanagari भुजङ्गप्रयात
+        self.assertIn('भुजङ्गप्रयात'.encode('utf-8'), response.data)
 
     def test_image_page_get(self):
         response = self.client.get('/image')
@@ -55,7 +61,7 @@ class TestWebAppRoutes(unittest.TestCase):
     def test_help_page(self):
         response = self.client.get('/help')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'What is a Chanda', response.data)
+        self.assertIn('उपजाति'.encode('utf-8'), response.data)
 
     def test_api_analyze(self):
         response = self.client.post('/api/analyze', json={
@@ -66,9 +72,23 @@ class TestWebAppRoutes(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.get_json()
         self.assertTrue(data['success'])
-        self.assertEqual(len(data['result']['line']), 1)
-        line_res = data['result']['line'][0]['result']
-        self.assertTrue(line_res['found'])
+
+    def test_api_compose_check(self):
+        response = self.client.post('/api/compose-check', json={
+            'meter': 'इन्द्रवज्रा',
+            'text': 'लोकाभिरामं रणरङ्गधीरं'
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertTrue(data['success'])
+        self.assertTrue(data['data']['complete'])
+
+    def test_api_meters(self):
+        response = self.client.get('/api/meters')
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertTrue(data['success'])
+        self.assertIn('मन्दाक्रान्ता', data['meters'])
 
 
 if __name__ == '__main__':

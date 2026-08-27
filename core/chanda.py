@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Core Sanskrit Meter Identification and Scansion Engine.
+Core Sanskrit Meter Identification and Scansion Engine for विशालवृत्तावलिः (Viśālavṛttāvaliḥ).
 
+Author: Balaji Baskaran
 Handles Akṣara-gaṇa-vṛtta, Mātrā-vṛtta, Ardhasama-vṛtta, Viṣama-vṛtta,
-and Upajāti meters with exact matching, Levenshtein fuzzy matching,
-verse-level aggregations, and multi-script transliteration.
+Upajāti hybrid detection, and Poetic Composition evaluations.
 """
 
 import os
@@ -29,8 +29,206 @@ import sanskrit_text as skt
 MAX_CACHE = 1024
 
 
+# 16 Classical Named Sub-types of Triṣṭubh Upajāti
+UPAJATI_TRISTUBH_NAMES = {
+    (False, False, False, False): ("इन्द्रवज्रा (शुद्ध)", "All 4 pādas Indravajrā"),
+    (True, True, True, True): ("उपेन्द्रवज्रा (शुद्ध)", "All 4 pādas Upendravajrā"),
+    (True, False, False, False): ("उपजाति (कीर्ति)", "Pāda 1 Upendra, Pādas 2-4 Indra"),
+    (False, True, False, False): ("उपजाति (वाणी)", "Pāda 2 Upendra, Pādas 1,3,4 Indra"),
+    (False, False, True, False): ("उपजाति (माला)", "Pāda 3 Upendra, Pādas 1,2,4 Indra"),
+    (False, False, False, True): ("उपजाति (शाला)", "Pāda 4 Upendra, Pādas 1-3 Indra"),
+    (True, True, False, False): ("उपजाति (हंसी)", "Pādas 1,2 Upendra, Pādas 3,4 Indra"),
+    (False, True, True, False): ("उपजाति (माया)", "Pādas 2,3 Upendra, Pādas 1,4 Indra"),
+    (False, False, True, True): ("उपजाति (चेती)", "Pādas 3,4 Upendra, Pādas 1,2 Indra"),
+    (True, False, False, True): ("उपजाति (भद्रा)", "Pādas 1,4 Upendra, Pādas 2,3 Indra"),
+    (True, False, True, False): ("उपजाति (प्रेमा)", "Pādas 1,3 Upendra, Pādas 2,4 Indra"),
+    (False, True, False, True): ("उपजाति (कमला)", "Pādas 2,4 Upendra, Pādas 1,3 Indra"),
+    (True, True, True, False): ("उपजाति (ऋद्धि)", "Pādas 1-3 Upendra, Pāda 4 Indra"),
+    (False, True, True, True): ("उपजाति (सिद्धि)", "Pādas 2-4 Upendra, Pāda 1 Indra"),
+    (True, False, True, True): ("उपजाति (बुद्धि)", "Pādas 1,3,4 Upendra, Pāda 2 Indra"),
+    (True, True, False, True): ("उपजाति (शुद्धि)", "Pādas 1,2,4 Upendra, Pāda 3 Indra"),
+}
+
+
+# Known Standard Meter Templates for Poetic Composition Assistant
+STANDARD_METER_TEMPLATES = {
+    "अनुष्टुभ्": {
+        "name": "अनुष्टुभ् (Anuṣṭubh / Śloka)",
+        "syllables": 8,
+        "matras": 12,
+        "pattern": "LLLLLLLL", # Variable with 5th Laghu, 6th Guru, 7th L/G
+        "pattern_display": "— — — — ल ग ल/ग —",
+        "gana": "श्लोक (५ ल, ६ ग, ७ ल/ग)",
+        "yati": "8 (Pādānta)",
+        "description": "Most ubiquitous Sanskrit epic meter (Mahābhārata, Rāmāyaṇa, Gītā). 8 syllables per pada."
+    },
+    "इन्द्रवज्रा": {
+        "name": "इन्द्रवज्रा (Indravajrā)",
+        "syllables": 11,
+        "matras": 18,
+        "pattern": "GGLGGLLGLGG",
+        "pattern_display": "ग ग ल | ग ग ल | ल ग ल | ग ग",
+        "gana": "त त ज ग ग",
+        "yati": "5, 6 (11)",
+        "description": "Classic 11-syllable Triṣṭubh meter starting with Guru."
+    },
+    "उपेन्द्रवज्रा": {
+        "name": "उपेन्द्रवज्रा (Upendravajrā)",
+        "syllables": 11,
+        "matras": 17,
+        "pattern": "LGLGGLLGLGG",
+        "pattern_display": "ल ग ल | ग ग ल | ल ग ल | ग ग",
+        "gana": "ज त ज ग ग",
+        "yati": "5, 6 (11)",
+        "description": "Sister meter to Indravajrā, beginning with Laghu."
+    },
+    "उपजाति": {
+        "name": "उपजाति (Upajāti)",
+        "syllables": 11,
+        "matras": 17,
+        "pattern": "-GLGGLLGLGG",
+        "pattern_display": "[ल/ग] ग ल | ग ग ल | ल ग ल | ग ग",
+        "gana": "[ज/त] त ज ग ग",
+        "yati": "5, 6 (11)",
+        "description": "Flexible hybrid verse combining Indravajrā and Upendravajrā across the 4 quarters."
+    },
+    "शालिनी": {
+        "name": "शालिनी (Śālinī)",
+        "syllables": 11,
+        "matras": 19,
+        "pattern": "GGGGGLGGLGG",
+        "pattern_display": "ग ग ग | ग ग ल | ग ग ल | ग ग",
+        "gana": "म त त ग ग",
+        "yati": "4, 7 (11)",
+        "description": "Solemn Triṣṭubh meter with yati after 4th and 7th syllables."
+    },
+    "रथोद्धता": {
+        "name": "रथोद्धता (Rathoddhatā)",
+        "syllables": 11,
+        "matras": 17,
+        "pattern": "GLGLGLLGLGL",
+        "pattern_display": "ग ल ग | ल ल ल | ग ल ग | ल ग",
+        "gana": "र न र ल ग",
+        "yati": "11",
+        "description": "Chariot-movement 11-syllable meter with lively cadence."
+    },
+    "द्रुतविलम्बित": {
+        "name": "द्रुतविलम्बित (Drutavilambita)",
+        "syllables": 12,
+        "matras": 17,
+        "pattern": "LLLGLLGLLGLG",
+        "pattern_display": "ल ल ल | ग ल ल | ग ल ल | ग ल ग",
+        "gana": "न भ भ र",
+        "yati": "12",
+        "description": "Fast-slow alternating cadence meter of 12 syllables."
+    },
+    "वंशस्थ": {
+        "name": "वंशस्थ (Vaṃśastha)",
+        "syllables": 12,
+        "matras": 18,
+        "pattern": "LGLGGLGGLGLG",
+        "pattern_display": "ल ग ल | ग ग ल | ल ग ल | ग ल ग",
+        "gana": "ज त ज र",
+        "yati": "5, 7 (12)",
+        "description": "Standard 12-syllable Jagatī meter used extensively by Kālidāsa and Bhāravi."
+    },
+    "भुजङ्गप्रयात": {
+        "name": "भुजङ्गप्रयात (Bhujaṅgaprayāta)",
+        "syllables": 12,
+        "matras": 20,
+        "pattern": "LGGLGGLGGLGG",
+        "pattern_display": "ल ग ग | ल ग ग | ल ग ग | ल ग ग",
+        "gana": "य य य य",
+        "yati": "6, 6 (12)",
+        "description": "Serpent-gliding meter composed purely of 4 Ya-gaṇas. Famous in Śaṅkarācārya stotras."
+    },
+    "तोटक": {
+        "name": "तोटक (Toṭaka)",
+        "syllables": 12,
+        "matras": 16,
+        "pattern": "LLGLLGLLGLLG",
+        "pattern_display": "ल ल ग | ल ल ग | ल ल ग | ल ल ग",
+        "gana": "स स स स",
+        "yati": "12",
+        "description": "Rhythmic dancing meter of 4 Sa-gaṇas. (e.g. Toṭakāṣṭakam)."
+    },
+    "वसन्ततिलका": {
+        "name": "वसन्ततिलका (Vasantatilakā)",
+        "syllables": 14,
+        "matras": 21,
+        "pattern": "GGLGLLLGLGLGG",
+        "pattern_display": "ग ग ल | ग ल ल | ल ग ल | ल ग ल | ग ग", # 14 syl
+        "pattern": "GGLGLLLGLGLGG",
+        "gana": "त भ ज ज ग ग",
+        "yati": "8, 6 (14)",
+        "description": "Ornament of Springtime, highly graceful 14-syllable meter with yati at 8 and 6."
+    },
+    "मालिनी": {
+        "name": "मालिनी (Mālinī)",
+        "syllables": 15,
+        "matras": 22,
+        "pattern": "LLLLLLGGGLGGLGG",
+        "pattern_display": "ल ल ल | ल ल ल | ग ग ग | ल ग ग | ल ग ग",
+        "gana": "न न म य य",
+        "yati": "8, 7 (15)",
+        "description": "Garland meter starting with 6 swift light syllables, followed by resonant heavy syllables."
+    },
+    "शिखरिणी": {
+        "name": "शिखरिणी (Śikhariṇī)",
+        "syllables": 17,
+        "matras": 25,
+        "pattern": "LGGGGLLLLLLGGLGGL",
+        "pattern_display": "ल ग ग | ग ग ग | ल ल ल | ल ल ग | ग ल ग | ल",
+        "pattern": "LGGGGLLLLLLGGLGGL",
+        "gana": "य म न स भ ल ग",
+        "yati": "6, 11 (17)",
+        "description": "Peak / Crest meter with pause after 6th and 17th syllables (e.g. Saundaryalaharī)."
+    },
+    "मन्दाक्रान्ता": {
+        "name": "मन्दाक्रान्ता (Mandākrāntā)",
+        "syllables": 17,
+        "matras": 26,
+        "pattern": "GGGGLLLLLLGGLGGLG",
+        "pattern_display": "ग ग ग | ग ल ल | ल ल ल | ग ग ल | ग ग ल | ग",
+        "gana": "म भ न त त ग ग",
+        "yati": "4, 6, 7 (17)",
+        "description": "Slow-advancing, majestic meter of Meghadūta with pauses at 4, 10, and 17 syllables."
+    },
+    "शार्दूलविक्रीडित": {
+        "name": "शार्दूलविक्रीडित (Śārdūlavikrīḍita)",
+        "syllables": 19,
+        "matras": 29,
+        "pattern": "GGGLLGLGLLLGGLGGLGG",
+        "pattern_display": "ग ग ग | ल ल ग | ल ग ल | ल ल ग | ग ल ग | ग ल ग",
+        "gana": "म स ज स त त ग",
+        "yati": "12, 7 (19)",
+        "description": "Tiger's play - grand, powerful 19-syllable meter with pause at 12th and 19th syllables."
+    },
+    "स्रग्धरा": {
+        "name": "स्रग्धरा (Sragdharā)",
+        "syllables": 21,
+        "matras": 32,
+        "pattern": "GGGGGLGLLLLLLGGGLGGLGG", # 21
+        "pattern_display": "ग ग ग | ग ल ग | ल ल ल | ल ल ल | ग ग ग | ल ग ग | ल ग ग",
+        "gana": "म र भ न य य य",
+        "yati": "7, 7, 7 (21)",
+        "description": "Garland-bearer - magnificent 21-syllable meter with tri-equal 7-syllable pauses."
+    },
+    "आर्या": {
+        "name": "आर्या (Āryā)",
+        "syllables": 0, # matra-based
+        "matras": 57, # 12 + 18 + 12 + 15
+        "pattern": "12-18-12-15",
+        "pattern_display": "पाद १: १२ मात्राः | पाद २: १८ मात्राः | पाद ३: १२ मात्राः | पाद ४: १५ मात्राः",
+        "gana": "मात्रागण (गण = ४ मात्राः, ६ठे में ज-गण/ल)",
+        "yati": "Pādānta",
+        "description": "Supreme Mātrā-vṛtta meter of Sanskrit philosophical & lyrical poetry."
+    }
+}
+
+
 class Chanda:
-    """Chanda (Sanskrit Meter) Identifier and Scansion Engine"""
+    """Chanda (Sanskrit Meter) Identifier and Scansion Engine for विशालवृत्तावलिः"""
     Y = 'Y'
     R = 'R'
     T = 'T'
@@ -85,16 +283,7 @@ class Chanda:
 
     @functools.lru_cache(maxsize=MAX_CACHE)
     def mark_lg(self, text: str) -> Tuple[List[List[List[str]]], List[str]]:
-        """
-        Mark Laghu-Guru for Devanagari text.
-
-        Returns
-        -------
-        syllables : list
-            Nested syllable structure from skt tokenizer.
-        lg_marks : list[str]
-            Laghu ('L') / Guru ('G') / empty ('') marks for each syllable.
-        """
+        """Mark Laghu-Guru for Devanagari text."""
         skip_syllables = [skt.AVAGRAHA]
         lg_marks = []
         syllables = skt.get_syllables(text)
@@ -139,10 +328,7 @@ class Chanda:
             'lg_str': lg_str
         }
 
-    # ----------------------------------------------------------------------- #
-
     def lg_to_gana(self, lg_str: str) -> str:
-        """Transform Laghu-Guru string into Gana string (e.g. LGL -> J)"""
         gana = []
         for i in range(0, len(lg_str), 3):
             group = lg_str[i:i + 3]
@@ -150,11 +336,9 @@ class Chanda:
         return ''.join(gana)
 
     def gana_to_lg(self, gana_str: str) -> str:
-        """Transform Gana string into Laghu-Guru string"""
         return gana_str.translate(str.maketrans(self.gana))
 
     def count_matra(self, gana_str: str) -> int:
-        """Count matra from a Gana or Laghu-Guru string"""
         lg_str = self.gana_to_lg(gana_str)
         return lg_str.count(self.L) + lg_str.count(self.G) * 2
 
@@ -266,7 +450,6 @@ class Chanda:
                     continue
 
     def read_data(self):
-        """Read all definitions from data path."""
         self.read_jaati(os.path.join(self.data_path, 'chanda_jaati.csv'))
         for fname in ['chanda_sama.csv', 'chanda_ardhasama.csv', 'chanda_vishama.csv', 'chanda_upajaati.csv']:
             fpath = os.path.join(self.data_path, fname)
@@ -275,7 +458,6 @@ class Chanda:
         self.read_matra_definitions(os.path.join(self.data_path, 'chanda_matra.csv'))
 
     def read_examples(self) -> Dict[str, List[str]]:
-        """Load curated examples from examples.json."""
         ex_path = os.path.join(self.data_path, 'examples.json')
         if os.path.exists(ex_path):
             with open(ex_path, 'r', encoding='utf-8') as f:
@@ -287,7 +469,6 @@ class Chanda:
     ###########################################################################
 
     def process_text(self, text: str) -> Tuple[List[str], str]:
-        """Detect transliteration scheme and return cleaned Devanagari lines."""
         scheme = detect(text)
         if scheme != sanscript.DEVANAGARI:
             devanagari_text = transliterate(text, scheme, sanscript.DEVANAGARI)
@@ -306,18 +487,14 @@ class Chanda:
     ###########################################################################
 
     def _lookup_lg(self, lg_str: str, dictionary: Dict[str, Any]) -> Tuple[str, List, bool]:
-        """Lookup LG pattern with optional terminal syllable fallback."""
         if lg_str in dictionary:
             return lg_str, dictionary[lg_str], True
-
-        # Sanskrit metric convention: last syllable can be treated as Guru
         if lg_str:
             last = lg_str[-1]
             alt_last = self.G if last == self.L else self.L
             alt_lg = lg_str[:-1] + alt_last
             if alt_lg in dictionary:
                 return alt_lg, dictionary[alt_lg], True
-
         return lg_str, [], False
 
     def find_direct_match(self, line: str, multi: bool = False) -> Optional[Dict[str, Any]]:
@@ -376,13 +553,11 @@ class Chanda:
         }
 
     def find_matra_match(self, matra_counts: Tuple[int, ...]) -> Dict[str, Any]:
-        """Check for Mātrā-vṛtta matches (e.g. Āryā: 12-18-12-15)."""
         found = matra_counts in self.MATRA_CHANDA
         chanda = []
         if found:
             chanda = self.MATRA_CHANDA.get(matra_counts, [])
         elif len(matra_counts) == 2:
-            # 2-line verse collapsing 4 padas (p1+p2, p3+p4)
             collapsed = []
             for pattern, meters in self.MATRA_CHANDA.items():
                 if len(pattern) == 4 and (pattern[0] + pattern[1], pattern[2] + pattern[3]) == matra_counts:
@@ -405,7 +580,6 @@ class Chanda:
     ###########################################################################
 
     def _editops(self, s1: str, s2: str, replace_cost: int = 1, delete_cost: int = 1, insert_cost: int = 1, max_diff: int = 3):
-        """Compute Levenshtein edit operations with early termination."""
         distance = Lev.distance(s1, s2)
         if distance > max_diff:
             return distance, None
@@ -421,7 +595,6 @@ class Chanda:
         return cost, ops
 
     def transform(self, line: str, signature: str, replace_cost: int = 1, delete_cost: int = 1, insert_cost: int = 1, max_diff: int = 3):
-        """Annotate syllable sequence with edit operations."""
         scan = self._scan_line(line)
         if scan is None:
             return 0, None
@@ -488,11 +661,6 @@ class Chanda:
     ###########################################################################
 
     def identify_line(self, line: str, fuzzy: bool = True, k: int = 10, scheme: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Analyze a single line of Sanskrit text.
-
-        Returns full dictionary formatted for both web views and JSON APIs.
-        """
         lines, detected_scheme = self.process_text(line)
         output_scheme = scheme or (detected_scheme if detected_scheme != sanscript.DEVANAGARI else None)
 
@@ -548,7 +716,6 @@ class Chanda:
         full_gana = self.lg_to_gana(lg_str).translate(self.ttable_out)
         full_jaati = self.JAATI.get(len(lg_str), self.JAATI.get(-1, ('अज्ञात',)))
 
-        # Display properties
         display_line = line
         display_syllables = [s for ln in direct_match['syllables'] for w in ln for s in w]
         display_lg = full_lg
@@ -599,6 +766,78 @@ class Chanda:
         return answer
 
     ###########################################################################
+    # Upajāti Hybrid Verse Detection
+    ###########################################################################
+
+    def _check_upajati_hybrid(self, line_results: List[Dict[str, Any]], verse_lines: List[int]) -> Optional[Tuple[List[str], float, str]]:
+        """
+        Check if the lines in a verse form an Upajāti (combination of Indravajrā + Upendravajrā,
+        or Vaṃśastha + Indravaṃśā).
+        """
+        if len(verse_lines) < 2:
+            return None
+
+        tristubh_padas = [] # True for Upendra (starts Laghu), False for Indra (starts Guru)
+        is_all_tristubh = True
+        is_mixed_tristubh = False
+
+        jagati_padas = []
+        is_all_jagati = True
+
+        for l_idx in verse_lines:
+            res = line_results[l_idx]['result']
+            m_names = [c[0] for c in res.get('chanda', [])]
+            
+            # Check 11-syllable Triṣṭubh (Indravajrā or Upendravajrā)
+            is_indra = ('इन्द्रवज्रा' in m_names)
+            is_upendra = ('उपेन्द्रवज्रा' in m_names)
+            
+            if is_indra or is_upendra:
+                tristubh_padas.append(is_upendra)
+            else:
+                # Check fuzzy or close pattern (11 syllables, matching tail)
+                lg_marks = [m for m in res.get('lg', []) if m]
+                if len(lg_marks) == 11:
+                    first_is_laghu = (lg_marks[0] in ['ल', 'L'])
+                    tristubh_padas.append(first_is_laghu)
+                else:
+                    is_all_tristubh = False
+
+            # Check 12-syllable Jagatī (Vaṃśastha or Indravaṃśā)
+            is_vamsastha = ('वंशस्थ' in m_names)
+            is_indravamsa = ('इन्द्रवंशा' in m_names)
+            if is_vamsastha or is_indravamsa:
+                jagati_padas.append(is_vamsastha)
+            else:
+                is_all_jagati = False
+
+        # 11-syllable Triṣṭubh Upajāti
+        if is_all_tristubh and len(tristubh_padas) == 4:
+            has_indra = False in tristubh_padas
+            has_upendra = True in tristubh_padas
+            if has_indra and has_upendra:
+                tuple_key = tuple(tristubh_padas)
+                sub_name, desc = UPAJATI_TRISTUBH_NAMES.get(tuple_key, ("उपजाति", "Mixed Indravajrā & Upendravajrā"))
+                pada_desc = []
+                for p_idx, is_u in enumerate(tristubh_padas, 1):
+                    pada_desc.append(f"पाद {p_idx}: {'उपेन्द्रवज्रा' if is_u else 'इन्द्रवज्रा'}")
+                detail = f" ({', '.join(pada_desc)})"
+                return ([sub_name, "उपजाति (इन्द्रवज्रा + उपेन्द्रवज्रा)"], 4.0, detail)
+
+        # 12-syllable Jagatī Upajāti
+        if is_all_jagati and len(jagati_padas) == 4:
+            has_vam = True in jagati_padas
+            has_ind = False in jagati_padas
+            if has_vam and has_ind:
+                pada_desc = []
+                for p_idx, is_v in enumerate(jagati_padas, 1):
+                    pada_desc.append(f"पाद {p_idx}: {'वंशस्थ' if is_v else 'इन्द्रवंशा'}")
+                detail = f" ({', '.join(pada_desc)})"
+                return (["उपजाति (वंशस्थ + इन्द्रवंशा)", "जगती-उपजाति"], 4.0, detail)
+
+        return None
+
+    ###########################################################################
     # Full Text & Verse Analysis
     ###########################################################################
 
@@ -610,9 +849,6 @@ class Chanda:
         save_path: Optional[str] = None,
         scheme: Optional[str] = None
     ) -> Dict[str, Any]:
-        """
-        Analyze multi-line text or verse with statistics & export files.
-        """
         line_results = []
         verse_results = []
 
@@ -652,14 +888,20 @@ class Chanda:
                 line_count += 1
 
                 if line_count % 4 == 0 or line_idx == len(line_results) - 1:
-                    verse_scores = ongoing_score.most_common()
-                    if verse_scores:
-                        best_score = verse_scores[0][1]
-                        best_matches = ([
-                            _c for _c, _score in verse_scores if _score == best_score
-                        ], best_score)
+                    # First check Upajāti hybrid detection
+                    upajati_match = self._check_upajati_hybrid(line_results, verse_result['lines'])
+                    if upajati_match:
+                        best_matches = (upajati_match[0], upajati_match[1])
+                        verse_scores = [(name, upajati_match[1]) for name in upajati_match[0]]
                     else:
-                        best_matches = (['अज्ञात'], 0)
+                        verse_scores = ongoing_score.most_common()
+                        if verse_scores:
+                            best_score = verse_scores[0][1]
+                            best_matches = ([
+                                _c for _c, _score in verse_scores if _score == best_score
+                            ], best_score)
+                        else:
+                            best_matches = (['अज्ञात'], 0)
 
                     verse_result['scores'] = verse_scores
                     verse_result['chanda'] = best_matches
@@ -736,11 +978,79 @@ class Chanda:
         }
 
     ###########################################################################
-    # Summary & Statistics
+    # Poetic Composition Assistant (काव्यसहायकः)
+    ###########################################################################
+
+    def get_meter_template(self, meter_name: str) -> Optional[Dict[str, Any]]:
+        """Return metric blueprint for composition assistant."""
+        return STANDARD_METER_TEMPLATES.get(meter_name)
+
+    def evaluate_composition(self, meter_name: str, line_text: str) -> Dict[str, Any]:
+        """
+        Evaluate line against a target meter template for live composition assistance.
+        """
+        tpl = self.get_meter_template(meter_name)
+        if not tpl:
+            return {'error': f"Meter '{meter_name}' not found in composition catalog"}
+
+        target_pattern = tpl['pattern']
+        target_lg = target_pattern.replace('L', 'ल').replace('G', 'ग')
+        target_len = len(target_pattern)
+
+        scan = self._scan_line(line_text)
+        if not scan:
+            return {
+                'meter': tpl,
+                'syllables': [],
+                'current_lg': [],
+                'matches': [],
+                'mismatches': [],
+                'next_expected': target_lg[0] if target_lg else 'ल',
+                'remaining': target_len,
+                'complete': False,
+                'is_valid': False
+            }
+
+        syllables = [s for ln in scan['syllables'] for w in ln for s in w]
+        current_lg = [self.output_map.get(m, m) for m in scan['lg_marks'] if m]
+
+        matches = []
+        mismatches = []
+        is_valid = True
+
+        for i, curr in enumerate(current_lg):
+            if i < target_len:
+                exp = target_lg[i]
+                if exp == '-' or exp == curr:
+                    matches.append(i)
+                else:
+                    mismatches.append(i)
+                    is_valid = False
+            else:
+                mismatches.append(i) # Extra syllable
+                is_valid = False
+
+        complete = (len(current_lg) == target_len and is_valid)
+        next_expected = target_lg[len(current_lg)] if len(current_lg) < target_len else None
+        remaining = max(0, target_len - len(current_lg))
+
+        return {
+            'meter': tpl,
+            'syllables': syllables,
+            'current_lg': current_lg,
+            'matches': matches,
+            'mismatches': mismatches,
+            'next_expected': next_expected,
+            'remaining': remaining,
+            'complete': complete,
+            'is_valid': is_valid
+        }
+
+    ###########################################################################
+    # Summary & Formatters
     ###########################################################################
 
     def summarize_results(self, results: Dict[str, Any]) -> Dict[str, Any]:
-        """Aggregate line and verse counts & statistics."""
         line_results = results.get('line', [])
         verse_results = results.get('verse', [])
 
@@ -784,10 +1094,6 @@ class Chanda:
             },
             'count': counts
         }
-
-    ###########################################################################
-    # String Formatters
-    ###########################################################################
 
     @staticmethod
     def format_chanda_pada(chanda: str, pada: tuple) -> str:

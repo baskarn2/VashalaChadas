@@ -11,7 +11,7 @@
                         <i class="fas fa-question-circle mr-2"></i>What is a Chanda (छन्दस्)?
                     </h4>
                     <p class="lead">
-                        <b>Sanskrit prosody</b> or <b>chandaśāstra</b> (छन्दशास्त्र) is the systematic study of poetic meters and verse structures in Sanskrit. 
+                        <b>Sanskrit prosody</b> or <b>Chandaśāstra</b> (छन्दशास्त्र) is the systematic science of poetic meters and verse structures in Sanskrit. 
                         Meters are broadly classified into <b>Akṣara-vṛtta</b> (fixed syllabic length and gaṇa structure) and <b>Mātrā-vṛtta</b> (fixed moraic count).
                     </p>
                 </div>
@@ -20,9 +20,49 @@
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-body p-4">
                     <h4 class="font-weight-bold text-primary mb-3">
+                        <i class="fas fa-layer-group mr-2"></i>What is an Upajāti (उपजाति)?
+                    </h4>
+                    <p>
+                        An <b>Upajāti</b> is a versatile hybrid meter formed when quarters (pādas) of closely related meters are intermixed within a single 4-line verse.
+                    </p>
+                    <p>
+                        The most celebrated Upajāti is the 11-syllable Triṣṭubh mixture of <b>Indravajrā</b> (starts with Guru: <code>गगल गगल लगल गग</code>) and <b>Upendravajrā</b> (starts with Laghu: <code>लगल गगल लगल गग</code>).
+                        Since each of the 4 padas can independently start with either Laghu or Guru, there are $2^4 = 16$ traditional named varieties of Upajāti (*Kīrti*, *Vāṇī*, *Mālā*, *Śālā*, *Haṃsī*, *Māyā*, *Kamalā*, etc.).
+                    </p>
+                    <p class="mb-0">
+                        <b>विशालवृत्तावलिः</b> automatically detects Upajāti verses and displays the exact subtype and pāda-by-pāda breakdown.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h4 class="font-weight-bold text-primary mb-3">
+                        <i class="fas fa-feather-alt mr-2"></i>How to use the Poetic Composition Assistant (काव्यसहायकः)?
+                    </h4>
+                    <p>
+                        The <b>काव्यसहायकः (Composition Studio)</b> tab is designed for poets, scholars, and students writing original Sanskrit verses:
+                    </p>
+                    <ol>
+                        <li>Choose a target meter (e.g. <i>Mandākrāntā</i>, <i>Vasantatilakā</i>, <i>Indravajrā</i>).</li>
+                        <li>Type each pada into the 4-pāda workspace.</li>
+                        <li>The system provides instant visual feedback:
+                            <ul>
+                                <li><span class="badge badge-success">Green slot</span>: Syllable weight matches the meter blueprint.</li>
+                                <li><span class="badge badge-danger">Red slot</span>: Syllable weight mismatch (e.g. typed Laghu where Guru is required).</li>
+                                <li><span class="badge badge-warning text-dark">Pulsing slot</span>: Displays the prompt for the <b>Next required syllable weight (ल or ग)</b>.</li>
+                            </ul>
+                        </li>
+                        <li>When all 4 padas are validated, copy or export your completed verse.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h4 class="font-weight-bold text-primary mb-3">
                         <i class="fas fa-graduation-cap mr-2"></i>Rules for Laghu and Guru Marking
                     </h4>
-                    <p>Every Sanskrit syllable (<b>akṣara</b>) is scanned as either <b>Laghu</b> (ल / Light / 1 mātrā) or <b>Guru</b> (ग / Heavy / 2 mātrās):</p>
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped">
                             <thead class="thead-light">
@@ -50,7 +90,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Guru (ग)</strong></td>
-                                    <td>Short vowel followed by a <strong>Saṃyuktākṣara</strong> (consonant conjunct / halanta cluster)</td>
+                                    <td>Short vowel followed by a <strong>Saṃyuktākṣara</strong> (consonant cluster / halanta)</td>
                                     <td><span class="badge badge-warning text-dark">2 Mātrās (Heavy)</span></td>
                                 </tr>
                                 <tr>
@@ -69,7 +109,6 @@
                     <h4 class="font-weight-bold text-primary mb-3">
                         <i class="fas fa-table mr-2"></i>The 8 Traditional Gaṇas (अष्टगणाः)
                     </h4>
-                    <p>In classical Sanskrit metrics, syllables are grouped into triads (groups of 3) yielding 2<sup>3</sup> = 8 <b>gaṇas</b>:</p>
                     <div class="alert alert-secondary text-center sanskrit-text font-weight-bold py-2 mb-3">
                         म-या-रा-स्त-रा-ज-भा-न-स-ल-गं &bull; "यमाताराजभानसलगम्"
                     </div>
@@ -127,35 +166,17 @@
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-body p-4">
                     <h4 class="font-weight-bold text-primary mb-3">
-                        <i class="fas fa-magic mr-2"></i>Understanding Fuzzy Matches &amp; Annotations
+                        <i class="fas fa-code mr-2"></i>Project Information &amp; Repository
                     </h4>
                     <p>
-                        When a line contains a typo, irregular sandhi, or slight variant, Chandojñānam uses sequence alignment to find the closest candidate meters with concrete transformation markers:
+                        <b>विशालवृत्तावलिः (Viśālavṛttāvaliḥ)</b> is created and maintained by <b>Balaji Baskaran</b>.
+                        Source code and issue tracking are hosted on GitHub:
                     </p>
-                    <ul>
-                        <li><code>i(ल)</code> or <code>i(ग)</code> : Insertion of a missing Laghu or Guru syllable.</li>
-                        <li><code>r(syllable)[ल/ग]{suggestion}</code> : Replacement / vowel alteration needed on that syllable.</li>
-                        <li><code>d(syllable)</code> : Deletion of an extra syllable.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-body p-4">
-                    <h4 class="font-weight-bold text-primary mb-3">
-                        <i class="fas fa-quote-right mr-2"></i>Academic Citation
-                    </h4>
-                    <p>If you use Chandojñānam in research, please cite:</p>
-                    <pre class="bg-dark text-light p-3 rounded small">@inproceedings{terdalkar2023chandojnanam,
-    title = "Chandojnanam: A {S}anskrit Meter Identification and Utilization System",
-    author = "Terdalkar, Hrishikesh and Bhattacharya, Arnab",
-    booktitle = "Proceedings of the Computational Sanskrit & Digital Humanities: 18th World Sanskrit Conference",
-    month = jan,
-    year = "2023",
-    publisher = "Association for Computational Linguistics",
-    url = "https://aclanthology.org/2023.wsc-csdh.8",
-    pages = "113--127"
-}</pre>
+                    <p>
+                        <a href="https://github.com/baskarn2/VashalaChadas" class="btn btn-outline-dark" target="_blank">
+                            <i class="fab fa-github mr-2"></i>GitHub: baskarn2/VashalaChadas
+                        </a>
+                    </p>
                 </div>
             </div>
 
