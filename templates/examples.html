@@ -1,0 +1,74 @@
+{% set active_page = "examples" %}
+{% include "header.html" %}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h3 class="font-weight-bold text-dark mb-2">
+                        <i class="fas fa-book-open mr-2 text-primary"></i>Classical Sanskrit Meter Examples
+                    </h3>
+                    <p class="text-muted">
+                        Explore famous verses and meter lakṣaṇas across popular Sanskrit meters. Click <strong class="text-primary"><i class="fas fa-play"></i></strong> to load and analyze in the Text tab, or <strong class="text-secondary"><i class="fas fa-copy"></i></strong> to copy the text to your clipboard.
+                    </p>
+
+                    <div class="row">
+                    {% for name, example in data['examples'].items() %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 example-card bg-white shadow-sm border">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2 px-3">
+                                    <h5 class="mb-0 font-weight-bold text-primary">{{name}}</h5>
+                                    <span class="badge badge-secondary">{{loop.index}}</span>
+                                </div>
+                                <div class="card-body p-3 sanskrit-text" style="font-size: 1.05rem; line-height: 1.8;">
+                                    {% for line in example %}
+                                        {% if line %}
+                                            <div>{{line}}</div>
+                                        {% else %}
+                                            <hr class="my-2">
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <div class="card-footer bg-white border-top-0 d-flex justify-content-end p-2">
+                                    <input type="hidden" id="example-{{loop.index}}" value="{{example | join('\n')}}">
+                                    <button title="Copy Text" class="btn btn-sm btn-outline-secondary mr-2" data-action="copy" data-target="#example-{{loop.index}}">
+                                        <i class="fas fa-copy mr-1"></i> Copy
+                                    </button>
+                                    <form action="{{url_for('identify_from_text')}}" method="POST" class="d-inline">
+                                        <input type="hidden" name="input_text" value="{{example | join('\n')}}">
+                                        <input type="hidden" name="text_mode" value="verse">
+                                        <button type="submit" title="Analyze this verse" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-play mr-1"></i> Analyze
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $("[data-action='copy']").click(function () {
+        const target_selector = $(this).data("target");
+        const target_text = $(target_selector).val();
+        navigator.clipboard.writeText(target_text).then(function() {
+            if ($.notify) {
+                $.notify({
+                    message: "Verse copied to clipboard!"
+                }, {
+                    type: "success"
+                });
+            } else {
+                alert("Verse copied to clipboard!");
+            }
+        });
+    });
+</script>
+
+{% include "footer.html" %}

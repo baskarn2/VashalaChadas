@@ -1,0 +1,92 @@
+{% set active_page = "image" -%}
+{% include "header.html" %}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h4 class="font-weight-bold text-dark mb-3">
+                        <i class="fas fa-image mr-2 text-primary"></i>Identify from Image (OCR)
+                    </h4>
+
+                    {% if data.image %}
+                    <div class="my-3 text-center p-3 bg-light border rounded">
+                        <img src="data:image/jpeg;base64,{{data.image}}" alt="Uploaded Sanskrit Verse" class="img-fluid rounded shadow-sm" style="max-height: 280px;">
+                        <div class="mt-2">
+                            <button id="upload-another-image" type="button" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-upload mr-1"></i> Upload Another Image
+                            </button>
+                        </div>
+                    </div>
+                    <form id="upload-container" class="d-none" method="POST" enctype="multipart/form-data" action="{{ url_for('identify_from_image') }}">
+                    {% else %}
+                    <form id="upload-container" method="POST" enctype="multipart/form-data" action="{{ url_for('identify_from_image') }}">
+                    {% endif %}
+                        <div class="form-group">
+                            <label class="font-weight-bold text-muted small text-uppercase">Select Image File or Drop Here:</label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="image_file" name="image_file" accept="image/*">
+                                <label class="custom-file-label" for="image_file">Choose image (PNG, JPG, JPEG, WEBP)...</label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center flex-wrap my-3">
+                            <div class="form-group mb-0">
+                                <span class="font-weight-bold text-muted small text-uppercase mr-2">OCR Engine:</span>
+                                {% for engine, label in data.engines.items() %}
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input class="custom-control-input" type="radio" name="ocr-engine" id="ocr-engine-{{engine}}" value="{{engine}}" {% if data.engine == engine %}checked{% endif %}>
+                                    <label class="custom-control-label" for="ocr-engine-{{engine}}">{{label}}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="submit" class="btn btn-primary shadow-sm">
+                                <i class="fas fa-magic mr-1"></i> OCR &amp; Identify
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- Editable Extracted Text Area -->
+                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('identify_from_image') }}">
+                        {% if data.image %}
+                        <input type="hidden" name="image_data" value="{{data.image}}">
+                        {% endif %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label for="input_text" class="font-weight-bold text-dark mb-0">
+                                <i class="fas fa-edit mr-1 text-primary"></i>Extracted / Editable Text:
+                            </label>
+                            {% include "output_scheme_selector.html" %}
+                        </div>
+                        <div class="form-group">
+                            <textarea class="form-control sanskrit-text shadow-sm" rows="4" id="input_text" name="input_text" placeholder="OCR extracted text will appear here. You can refine or edit it before running meter identification...">{% if 'text' in data %}{{data.text}}{% endif %}</textarea>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            {% include "text_mode_selector.html" %}
+                            <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                                <i class="fas fa-search mr-1"></i> Identify Meter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% include "result.html" %}
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function () {
+    if (typeof bsCustomFileInput !== 'undefined') {
+        bsCustomFileInput.init();
+    }
+    $("#upload-another-image").click(function () {
+        $("#upload-container").removeClass("d-none");
+    });
+});
+</script>
+
+{% include "footer.html" %}

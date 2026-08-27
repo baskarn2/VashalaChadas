@@ -1,0 +1,50 @@
+{% set active_page = "file" -%}
+{% include "header.html" %}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h4 class="font-weight-bold text-dark mb-3">
+                        <i class="fas fa-file-alt mr-2 text-primary"></i>Identify from Text File
+                    </h4>
+                    <p class="text-muted small">Upload a Sanskrit text file (.txt, .csv, .md) to process multiple lines or entire texts with batch scansion.</p>
+                    
+                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('identify_from_file') }}">
+                        <div class="d-flex justify-content-end mb-2">
+                            {% include "output_scheme_selector.html" %}
+                        </div>
+
+                        <div class="form-group my-3">
+                            <label class="font-weight-bold text-muted small text-uppercase">Choose Text File:</label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="text_file" name="text_file" accept=".txt,.csv,.md">
+                                <label class="custom-file-label" for="text_file">Choose text file...</label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+                            {% include "text_mode_selector.html" %}
+                            <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                                <i class="fas fa-microchip mr-1"></i> Analyze File
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% include "result.html" %}
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function () {
+    if (typeof bsCustomFileInput !== 'undefined') {
+        bsCustomFileInput.init();
+    }
+});
+</script>
+
+{% include "footer.html" %}

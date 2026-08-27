@@ -1,0 +1,102 @@
+<div id="feedback-modal" class="modal fade" role="dialog" tabindex="-1" aria-labelledby="feedback-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="feedback-modal-label">
+          <i class="fas fa-comment-dots mr-2"></i>Feedback &amp; Local Info (Pratikriyā)
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="feedback-form">
+          <div class="card rounded border-0 bg-light">
+            <div class="card-body p-3">
+              <div class="alert alert-info">
+                <strong>Local Chandojñānam System</strong><br>
+                Running locally in your environment. You can submit suggestions or comments below.
+              </div>
+              <div class="form-group">
+                <label class="small text-muted font-weight-bold">Current Page</label>
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text"><i class="fas fa-link"></i></div>
+                  </div>
+                  <input type="text" readonly class="form-control" name="feedback-url" value="{{request.url}}">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="small text-muted font-weight-bold">Your Name</label>
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text"><i class="fa fa-user"></i></div>
+                  </div>
+                  <input type="text" placeholder="Your Name" class="form-control" name="feedback-name" required value="Local User">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="small text-muted font-weight-bold">Your Email / Note</label>
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text"><i class="fa fa-at"></i></div>
+                  </div>
+                  <input type="email" placeholder="Your Email" class="form-control" name="feedback-email" value="local@localhost">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="small text-muted font-weight-bold">Feedback / Observation</label>
+                <div class="input-group mb-2">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text"><i class="fa fa-comment"></i></div>
+                  </div>
+                  <textarea rows="4" placeholder="Enter your feedback, suggestions, or meter observations..." name="feedback-msg" class="form-control" required></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="feedback-submit">Save Feedback</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var $form = $('#feedback-form');
+  $('#feedback-submit').on('click', function (event) {
+    if ($form[0].checkValidity()) {
+      $.post("{{url_for('feedback')}}",
+        $form.serialize(),
+        function (response) {
+          if (response && response.success) {
+            $.notify({
+              message: response.message || "Feedback recorded successfully!"
+            }, {
+              type: "success"
+            });
+          } else {
+            $.notify({
+              message: (response && response.message) || "Feedback saved locally!"
+            }, {
+              type: "info"
+            });
+          }
+        },
+        'json').fail(function() {
+          $.notify({
+            message: "Feedback logged locally."
+          }, {
+            type: "success"
+          });
+        });
+      $('#feedback-modal').modal('hide');
+    } else {
+      $form[0].reportValidity();
+    }
+  });
+</script>

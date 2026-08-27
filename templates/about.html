@@ -1,0 +1,78 @@
+{% set active_page = "about" %}
+{% include "header.html" %}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h3 class="font-weight-bold text-primary mb-3">About Sanskrit Prosody (Chandaśāstra)</h3>
+                    <p class="lead text-muted">
+                        <b>Sanskrit prosody</b> or <b>chandaśāstra</b> (<i>छन्दशास्त्र</i>) is the ancient traditional science of poetic meters and verse structures in Sanskrit literature.
+                    </p>
+                    <p>
+                        Every Sanskrit meter (<b>chanda</b>) carries its own distinct rhythm, cadence, and aesthetic movement. Sanskrit meters are broadly categorized into:
+                    </p>
+                    <ul>
+                        <li><b>Akṣaragaṇa-vṛtta (Vṛtta)</b>: Syllabic meters based on fixed combinations of light (<i>laghu</i>) and heavy (<i>guru</i>) syllables arranged into 8 standard triads called <b>gaṇas</b>.
+                            <ul>
+                                <li><b>Sama-vṛtta</b>: All 4 quarters (pādas) have identical rhythmic patterns (e.g., <i>Anuṣṭubh</i>, <i>Indravajrā</i>, <i>Vasantatilakā</i>, <i>Śārdūlavikrīḍita</i>, <i>Mandākrāntā</i>).</li>
+                                <li><b>Ardhasama-vṛtta</b>: Odd quarters (1 &amp; 3) follow one pattern, and even quarters (2 &amp; 4) follow another (e.g., <i>Viyoginī</i>, <i>Puṣpitāgrā</i>).</li>
+                                <li><b>Viṣama-vṛtta</b>: All 4 quarters have differing structures.</li>
+                                <li><b>Upajāti</b>: Hybrid verses combining related meters (such as <i>Indravajrā</i> and <i>Upendravajrā</i>).</li>
+                            </ul>
+                        </li>
+                        <li><b>Mātrā-vṛtta (Jāti)</b>: Moraic meters defined by counting total temporal units (<i>mātrās</i>) per quarter rather than fixed individual syllables (e.g., <i>Āryā</i>, <i>Gīti</i>, <i>Upagīti</i>).</li>
+                    </ul>
+
+                    <hr class="my-4">
+
+                    <h4 class="font-weight-bold text-dark mb-3">About Chandojñānam Local Application</h4>
+                    <p>
+                        <b>Chandojñānam</b> (<i>छन्दोज्ञानम्</i>) is a comprehensive meter identification and scansion system with a database of <b>over 200+ Sanskrit meters</b> collated from classic authoritative sources including <i>Vṛttaratnākara</i> (वृत्तरत्नाकर) and <i>Śabdakalpadruma</i> (शब्दकल्पद्रुम).
+                    </p>
+                    <p>
+                        Key capabilities:
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <h6 class="font-weight-bold text-primary"><i class="fas fa-check-circle mr-2"></i>Multi-Script Input &amp; Output</h6>
+                                <p class="small text-muted mb-0">Supports Devanagari, IAST, ITRANS, Harvard-Kyoto, SLP1, WX, Bengali, Telugu, Kannada, Malayalam, Gujarati, Tamil, Oriya, and more.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <h6 class="font-weight-bold text-primary"><i class="fas fa-search-plus mr-2"></i>Smart Fuzzy Matching</h6>
+                                <p class="small text-muted mb-0">Ranks closest meters using Levenshtein distance on syllable weight vectors and produces exact edit suggestions for poetic corrections.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <h6 class="font-weight-bold text-primary"><i class="fas fa-layer-group mr-2"></i>Verse &amp; Line Modes</h6>
+                                <p class="small text-muted mb-0">Analyze verses as 4-pada compositions with overall meter inference, or analyze individual isolated lines.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <h6 class="font-weight-bold text-primary"><i class="fas fa-file-export mr-2"></i>Export &amp; Statistics</h6>
+                                <p class="small text-muted mb-0">Download full scansion results in JSON or TXT formats and review aggregated meter distribution statistics.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <a class="btn btn-primary btn-lg px-4 mr-2 shadow-sm" href="{{url_for('identify_from_text')}}" role="button">
+                            <i class="fas fa-play mr-2"></i>Start Analyzing Text
+                        </a>
+                        <a class="btn btn-outline-secondary btn-lg px-4 shadow-sm" href="{{url_for('show_help')}}" role="button">
+                            <i class="fas fa-book mr-2"></i>Read Prosody Guide
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include "footer.html" %}

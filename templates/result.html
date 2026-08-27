@@ -1,0 +1,121 @@
+{% if data.result %}
+{% if data.result.line or data.result.verse %}
+<hr class="my-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0 text-dark font-weight-bold">
+        <i class="fas fa-poll mr-2 text-primary"></i>Scansion Results
+    </h4>
+    <div>
+        {% if data.result_path and data.result_path.json %}
+        <button id="download-json" class="btn btn-sm btn-outline-secondary mr-1 shadow-sm" title="Download JSON Results">
+            <i class="fas fa-file-code mr-1"></i> JSON
+        </button>
+        {% endif %}
+        {% if data.result_path and data.result_path.txt %}
+        <button id="download-txt" class="btn btn-sm btn-outline-secondary mr-1 shadow-sm" title="Download Text Scansion">
+            <i class="fas fa-file-alt mr-1"></i> TXT
+        </button>
+        {% endif %}
+        {% if data.summary_pretty %}
+        <button class="btn btn-sm btn-info shadow-sm" title="View Summary Statistics" data-toggle="modal" data-target="#result-summary-modal">
+            <i class="fas fa-chart-pie mr-1"></i> Summary
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function download_file(file_link) {
+        const tmp_link = document.createElement('a');
+        document.body.appendChild(tmp_link);
+        tmp_link.href = file_link;
+        tmp_link.download = true;
+        tmp_link.click();
+        tmp_link.remove();
+    }
+    $("#download-json").click(function(e) {
+        e.preventDefault();
+        {% if data.result_path and data.result_path.json %}
+        download_file("{{url_for('download_result', filename=data.result_path.json)}}");
+        {% endif %}
+    });
+    $("#download-txt").click(function(e) {
+        e.preventDefault();
+        {% if data.result_path and data.result_path.txt %}
+        download_file("{{url_for('download_result', filename=data.result_path.txt)}}");
+        {% endif %}
+    });
+</script>
+{% endif %}
+
+<!-- Verse Mode Presentation -->
+{% if data.text_mode == "verse" %}
+    {% for verse_result in data.result.verse %}
+    {% set verse_loop = loop %}
+    {% set verse_id = verse_loop.index %}
+    {% set output_scheme = data.output_scheme or verse_result.scheme %}
+    <div class="card card-verse mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center bg-light">
+            <div>
+                <span class="badge badge-dark mr-2">Verse {{verse_id}}</span>
+                <strong class="text-primary font-size-lg">
+                    {% if verse_result['chanda'] and verse_result['chanda'][0] %}
+                        {{" / ".join(verse_result['chanda'][0]) | transliterate(output_scheme)}}
+                    {% else %}
+                        Unknown / Mixed
+                    {% endif %}
+                </strong>
+                {% if verse_result['chanda'] and verse_result['chanda'][1] %}
+                    <span class="badge badge-secondary ml-2">Score: {{verse_result['chanda'][1]}}</span>
+                {% endif %}
+            </div>
+            <button data-toggle="collapse" data-target=".multi-collapse-{{verse_id}}" aria-controls="verse-lines-{{verse_id}} verse-scansion-{{verse_id}}" data-custom-multi-toggle-text="Hide Scansion" data-custom-default-class="btn-info" data-custom-multi-toggle-class="btn-secondary" class="btn btn-sm shadow-sm">
+                Show Scansion
+            </button>
+        </div>
+        <div id="verse-lines-{{verse_id}}" class="card-body collapse show multi-collapse-{{verse_id}} sanskrit-text bg-white py-3">
+            {% for line_idx in verse_result['lines'] %}
+            {% set line_answer = data.result.line[line_idx] %}
+            <div class="py-1">
+                {{line_answer.line | transliterate(output_scheme)}}
+            </div>
+            {% endfor %}
+        </div>
+        <div id="verse-scansion-{{verse_id}}" class="card-body p-3 collapse multi-collapse-{{verse_id}} bg-light border-top">
+            {% for line_idx in verse_result['lines'] %}
+                {% set line_answer = data.result.line[line_idx] %}
+                {% set line_id = loop.index %}
+                {% set line_result = line_answer.result %}
+                <div class="mb-3">
+                    <div class="font-weight-bold text-dark mb-1">Pada {{loop.index}}: {{line_answer.line | transliterate(output_scheme)}}</div>
+                    {% include "line_result.html" %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Line Mode Presentation -->
+{% if data.text_mode == "line" %}
+    {% for line_answer in data.result.line %}
+        {% set line_id = loop.index %}
+        {% set line_result = line_answer.result %}
+        {% set output_scheme = data.output_scheme or line_result.display_scheme %}
+        <div class="card card-verse mb-3">
+            <div class="card-header bg-light">
+                <span class="badge badge-dark mr-2">Line {{line_id}}</span>
+                <span class="sanskrit-text font-weight-bold text-dark">{{line_answer.line | transliterate(output_scheme)}}</span>
+            </div>
+            <div class="card-body p-3">
+                {% include "line_result.html" %}
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if data.summary_pretty %}
+    {% include "result_summary.html" %}
+{% endif %}
+
+{% endif %}

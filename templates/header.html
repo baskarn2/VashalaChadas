@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>&bull; Chandojñānam &bull; {{ data.title|default('Sanskrit Meter Identification') }} &bull;</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link href="{{url_for('static', filename='bootstrap/css/bootstrap.min.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='custom/css/sticky-footer.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='custom/css/custom.css')}}" rel="stylesheet">
+
+    <!-- jQuery -->
+    <script src="{{url_for('static', filename='js/jquery.js')}}"></script>
+
+    <!-- Bootstrap Select CSS -->
+    <link rel="stylesheet" href="{{url_for('static', filename='plugins/css/bootstrap-select.min.css')}}">
+
+    <!-- Animations for Bootstrap-Notify -->
+    <link rel="stylesheet" href="{{url_for('static', filename='plugins/css/animate.min.css')}}">
+
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="{{url_for('static', filename='fontawesome/css/all.min.css')}}">
+
+    <script src="{{url_for('static', filename='plugins/bs-custom-file-input.min.js')}}"></script>
+</head>
+<body>
+    {% set navigation_bar = {
+        'about': ('home', 'About'),
+        'text': ('identify_from_text', 'Text'),
+        'image': ('identify_from_image', 'Image'),
+        'file': ('identify_from_file', 'File'),
+        'examples': ('show_examples', 'Examples'),
+        'help': ('show_help', 'Help')
+    } -%}
+    {% set active_page = active_page|default('about') -%}
+
+    <div class="jumbotron-header text-center position-relative mb-0">
+        <h1 class="display-4 font-weight-bold">Chandojñānam</h1>
+        <div class="subtitle">Sanskrit Meter Identification and Utilization System (छन्दोज्ञानम्)</div>
+    </div>
+    
+    <div class="col-auto position-fixed" style="top: 1em; right: 1em; z-index: 1050;" data-toggle="modal" data-target="#feedback-modal">
+        <button class="btn btn-outline-light shadow-sm" data-placement="bottom" title="Feedback / Local Info (Pratikriyā)">
+            <i class="fas fa-envelope mr-1"></i> <span class="d-none d-md-inline">Feedback</span>
+        </button>
+    </div>
+
+    <ul class="nav nav-tabs main-nav justify-content-center bg-light px-3">
+        {% for id in navigation_bar %}
+        {% set func = navigation_bar[id][0] %}
+        {% set caption = navigation_bar[id][1] %}
+        <li class="nav-item">
+            <a class="nav-link {% if id == active_page %}active{% endif %}" href="{{url_for(func)}}">
+                {% if id == 'about' %}<i class="fas fa-info-circle mr-1"></i>{% endif %}
+                {% if id == 'text' %}<i class="fas fa-keyboard mr-1"></i>{% endif %}
+                {% if id == 'image' %}<i class="fas fa-image mr-1"></i>{% endif %}
+                {% if id == 'file' %}<i class="fas fa-file-alt mr-1"></i>{% endif %}
+                {% if id == 'examples' %}<i class="fas fa-book-open mr-1"></i>{% endif %}
+                {% if id == 'help' %}<i class="fas fa-question-circle mr-1"></i>{% endif %}
+                {{caption}}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    
+    {% include "messages.html" %}
+    {% include "feedback.html" %}

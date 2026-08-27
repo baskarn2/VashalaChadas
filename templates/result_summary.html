@@ -1,0 +1,21 @@
+<!-- Result Summary Modal -->
+<div class="modal fade" id="result-summary-modal" tabindex="-1" role="dialog" aria-labelledby="result-summary-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-light">
+                <h5 class="modal-title" id="result-summary-modal-title">
+                    <i class="fas fa-chart-bar mr-2"></i>Analysis Summary &amp; Statistics
+                </h5>
+                <button type="button" class="close text-light" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-3">
+                <pre class="bg-dark text-success p-3 rounded pre-summary mb-0" style="max-height: 450px; overflow-y: auto;">{{data.summary_pretty}}</pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,142 @@
+{% if line_result %}
+{% set output_scheme = data.output_scheme or line_result.display_scheme %}
+
+<div class="table-responsive my-2">
+<table class="table table-sm table-bordered text-center table-scansion mx-auto mb-2">
+    <!-- Syllables row -->
+    <tr class="sanskrit-text">
+        <th class="text-left bg-light text-nowrap" style="width: 130px;">Akṣarāṇi</th>
+        {% for s in line_result.display_syllables %}
+            <td class="font-weight-bold">{{s | transliterate(output_scheme)}}</td>
+        {% endfor %}
+    </tr>
+    <!-- Laghu-Guru row -->
+    <tr>
+        <th class="text-left bg-light text-nowrap">Laghu-Guru</th>
+        {% for lg_mark in line_result.display_lg %}
+            <td class="{% if lg_mark == 'ल' or lg_mark == 'L' %}cell-laghu{% elif lg_mark == 'ग' or lg_mark == 'G' %}cell-guru{% endif %}">
+                {{lg_mark | transliterate(output_scheme)}}
+            </td>
+        {% endfor %}
+    </tr>
+    <!-- Gana row -->
+    {% if line_result.gana == line_result.display_gana %}
+    <tr>
+        <th class="text-left bg-light text-nowrap">Gaṇa</th>
+        {% set counter = namespace(gana_idx=0, written_count=0, colspan=0, letters=0) %}
+        {% for lg_mark in line_result.lg %}
+            {% set counter.colspan = counter.colspan + 1 %}
+            {% if counter.written_count + 3 > line_result.length %}
+                <td class="text-muted small">{{lg_mark | transliterate(output_scheme)}}</td>
+            {% endif %}
+            {% if lg_mark %}
+                {% set counter.letters = counter.letters + 1 %}
+                {% if counter.letters == 3 %}
+                    <td class="cell-gana font-weight-bold" colspan="{{counter.colspan}}">
+                        {% if counter.gana_idx < line_result.gana|length %}
+                            {{line_result.gana[counter.gana_idx] | transliterate(output_scheme)}}
+                        {% endif %}
+                    </td>
+                    {% set counter.gana_idx = counter.gana_idx + 1 %}
+                    {% set counter.colspan = 0 %}
+                    {% set counter.letters = 0 %}
+                    {% set counter.written_count = counter.written_count + 3 %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </tr>
+    {% else %}
+    <tr>
+        <th class="text-left bg-light text-nowrap">Gaṇa</th>
+        <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-3 cell-gana">
+            {{line_result.display_gana | transliterate(output_scheme)}}
+        </td>
+    </tr>
+    {% endif %}
+    <!-- Counts row -->
+    <tr>
+        <th class="text-left bg-light text-nowrap">Counts</th>
+        <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-3">
+            {% if output_scheme and output_scheme not in ["devanagari", "iast", "slp1", "wx", "hk", "itrans"] %}
+                {% set string_syllables = "syllables" %}
+                {% set string_morae = "morae" %}
+            {% else %}
+                {% set string_syllables = "अक्षराणि" | transliterate(output_scheme) %}
+                {% set string_morae = "मात्राः" | transliterate(output_scheme) %}
+            {% endif %}
+            <span class="badge badge-secondary px-2 py-1 mr-2">{{line_result.display_length}} {{string_syllables}}</span>
+            <span class="badge badge-secondary px-2 py-1">{{line_result.display_matra}} {{string_morae}}</span>
+        </td>
+    </tr>
+    <!-- Jati row -->
+    <tr>
+        <th class="text-left bg-light text-nowrap">Jāti</th>
+        <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-3 font-weight-bold text-dark">
+            {{line_result.display_jaati | transliterate(output_scheme)}}
+        </td>
+    </tr>
+    <!-- Chanda row -->
+    <tr>
+        <th class="text-left bg-light text-nowrap">Chanda</th>
+        <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-3">
+        {% if line_result.found %}
+            <span class="badge badge-meter mr-2">{{line_result.display_chanda | transliterate(output_scheme)}}</span>
+        {% else %}
+            {% if line_result.fuzzy %}
+                <span class="text-warning font-weight-bold mr-2">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    {{line_result.fuzzy[0]["display_chanda"] | transliterate(output_scheme)}} 
+                    <span class="badge badge-warning text-dark ml-1">({{line_result.fuzzy[0]["cost"]}} {% if line_result.fuzzy[0]["cost"] == 1 %}edit{% else %}edits{% endif %})</span>
+                </span>
+                <button data-toggle="collapse" data-target="#fuzzy-{{line_id}}" data-custom-toggle-text="- Hide Fuzzy" data-custom-default-class="btn-info" data-custom-toggle-class="btn-secondary" class="btn btn-sm btn-info float-right shadow-sm">
+                    + Fuzzy Suggestions
+                </button>
+            {% else %}
+                <span class="text-danger font-weight-bold"><i class="fas fa-times-circle mr-1"></i>Meter Not Found</span>
+            {% endif %}
+        {% endif %}
+        </td>
+    </tr>
+</table>
+</div>
+
+{% if not line_result.found and line_result.fuzzy %}
+<div id="fuzzy-{{line_id}}" class="collapse mt-2 mb-3">
+    <div class="card card-body border-warning bg-light p-2">
+        <h6 class="font-weight-bold text-secondary mb-2"><i class="fas fa-search mr-1"></i>Close Fuzzy Matches (Probable Meters):</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-striped text-center mb-0">
+                <thead class="thead-dark">
+                    <tr>
+                        <th style="width: 40px;">#</th>
+                        <th>Chanda (Meter)</th>
+                        <th>Gaṇa Pattern</th>
+                        <th>Edit Distance</th>
+                        <th>Similarity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fuzzy_result in line_result.fuzzy %}
+                    <tr>
+                        <td rowspan="2" class="align-middle font-weight-bold">{{loop.index}}</td>
+                        <td class="font-weight-bold text-primary">{{fuzzy_result["display_chanda"] | transliterate(output_scheme)}}</td>
+                        <td><code>{{fuzzy_result["gana"] | transliterate(output_scheme)}}</code></td>
+                        <td><span class="badge badge-pill badge-secondary">{{fuzzy_result["cost"]}}</span></td>
+                        <td><strong class="text-success">{{(fuzzy_result["similarity"] * 100) | round(1)}}%</strong></td>
+                    </tr>
+                    <tr class="table-warning">
+                        <td colspan="4" class="text-left font-italic small pl-3">
+                            <strong>Suggested transformation:</strong> {{ fuzzy_result["suggestion"] | string | transliterate(output_scheme)}}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="alert alert-warning">No scansion details available for this line.</div>
+{% endif %}
