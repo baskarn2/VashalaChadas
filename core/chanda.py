@@ -5,7 +5,7 @@ Core Sanskrit Meter Identification and Scansion Engine for विशालवृ
 
 Author: Balaji Baskaran
 Handles Akṣara-gaṇa-vṛtta, Mātrā-vṛtta, Ardhasama-vṛtta, Viṣama-vṛtta,
-Upajāti hybrid detection, and Poetic Composition evaluations.
+Upajāti hybrid detection, Pādānta-Guru metrical rule, and Poetic Composition.
 """
 
 import os
@@ -56,7 +56,7 @@ STANDARD_METER_TEMPLATES = {
         "name": "अनुष्टुभ् (Anuṣṭubh / Śloka)",
         "syllables": 8,
         "matras": 12,
-        "pattern": "LLLLLLLL", # Variable with 5th Laghu, 6th Guru, 7th L/G
+        "pattern": "LLLLLLLL",
         "pattern_display": "— — — — ल ग ल/ग —",
         "gana": "श्लोक (५ ल, ६ ग, ७ ल/ग)",
         "yati": "8 (Pādānta)",
@@ -157,8 +157,7 @@ STANDARD_METER_TEMPLATES = {
         "syllables": 14,
         "matras": 21,
         "pattern": "GGLGLLLGLGLGG",
-        "pattern_display": "ग ग ल | ग ल ल | ल ग ल | ल ग ल | ग ग", # 14 syl
-        "pattern": "GGLGLLLGLGLGG",
+        "pattern_display": "ग ग ल | ग ल ल | ल ग ल | ल ग ल | ग ग",
         "gana": "त भ ज ज ग ग",
         "yati": "8, 6 (14)",
         "description": "Ornament of Springtime, highly graceful 14-syllable meter with yati at 8 and 6."
@@ -179,7 +178,6 @@ STANDARD_METER_TEMPLATES = {
         "matras": 25,
         "pattern": "LGGGGLLLLLLGGLGGL",
         "pattern_display": "ल ग ग | ग ग ग | ल ल ल | ल ल ग | ग ल ग | ल",
-        "pattern": "LGGGGLLLLLLGGLGGL",
         "gana": "य म न स भ ल ग",
         "yati": "6, 11 (17)",
         "description": "Peak / Crest meter with pause after 6th and 17th syllables (e.g. Saundaryalaharī)."
@@ -208,7 +206,7 @@ STANDARD_METER_TEMPLATES = {
         "name": "स्रग्धरा (Sragdharā)",
         "syllables": 21,
         "matras": 32,
-        "pattern": "GGGGGLGLLLLLLGGGLGGLGG", # 21
+        "pattern": "GGGGGLGLLLLLLGGGLGGLGG",
         "pattern_display": "ग ग ग | ग ल ग | ल ल ल | ल ल ल | ग ग ग | ल ग ग | ल ग ग",
         "gana": "म र भ न य य य",
         "yati": "7, 7, 7 (21)",
@@ -216,8 +214,8 @@ STANDARD_METER_TEMPLATES = {
     },
     "आर्या": {
         "name": "आर्या (Āryā)",
-        "syllables": 0, # matra-based
-        "matras": 57, # 12 + 18 + 12 + 15
+        "syllables": 0,
+        "matras": 57,
         "pattern": "12-18-12-15",
         "pattern_display": "पाद १: १२ मात्राः | पाद २: १८ मात्राः | पाद ३: १२ मात्राः | पाद ४: १५ मात्राः",
         "gana": "मात्रागण (गण = ४ मात्राः, ६ठे में ज-गण/ल)",
@@ -278,54 +276,75 @@ class Chanda:
         self.read_data()
 
     ###########################################################################
-    # Prosody & Syllable Marking
+    # Prosody & Syllable Marking with Pādānta-Guru Rule
     ###########################################################################
 
-    @functools.lru_cache(maxsize=MAX_CACHE)
-    def mark_lg(self, text: str) -> Tuple[List[List[List[str]]], List[str]]:
-        """Mark Laghu-Guru for Devanagari text."""
+    def mark_lg(self, text: str) -> Tuple[List[List[List[str]]], List[str], List[bool]]:
+        """
+        Mark Laghu-Guru for Devanagari text.
+        Tracks natural weights and flags Pādānta-Guru rule (last letter counted as Guru even if naturally Laghu).
+        """
         skip_syllables = [skt.AVAGRAHA]
         lg_marks = []
+        padanta_flags = []
         syllables = skt.get_syllables(text)
         flat_syllables = [s for ln in syllables for w in ln for s in w]
         if not flat_syllables:
-            return flat_syllables, lg_marks
+            return flat_syllables, lg_marks, padanta_flags
 
-        for idx, syllable in enumerate(flat_syllables[:-1]):
+        # Find the index of the last non-halanta vocalic syllable
+        last_vocalic_idx = -1
+        for idx in range(len(flat_syllables) - 1, -1, -1):
+            s = flat_syllables[idx]
+            if s[-1] != skt.HALANTA and s not in skip_syllables:
+                last_vocalic_idx = idx
+                break
+
+        for idx, syllable in enumerate(flat_syllables):
             if syllable[-1] == skt.HALANTA or syllable in skip_syllables:
                 lg_marks.append('')
+                padanta_flags.append(False)
                 continue
-            laghu = (
-                skt.is_laghu(syllable) and
-                (skt.HALANTA not in flat_syllables[idx + 1])
-            )
-            lg_marks.append(self.L if laghu else self.G)
 
-        # Handle the last syllable
-        syllable = flat_syllables[-1]
-        if syllable[-1] == skt.HALANTA or syllable in skip_syllables:
-            lg_marks.append('')
-        else:
-            lg_marks.append(self.L if skt.is_laghu(syllable) else self.G)
+            if idx == len(flat_syllables) - 1 or idx == last_vocalic_idx:
+                is_natural_laghu = skt.is_laghu(syllable)
+                lg_marks.append(self.L if is_natural_laghu else self.G)
+                # If naturally Laghu and at the very end of line/pada, eligible for Padanta-Guru
+                padanta_flags.append(is_natural_laghu)
+            else:
+                next_syllable = flat_syllables[idx + 1]
+                laghu = (
+                    skt.is_laghu(syllable) and
+                    (skt.HALANTA not in next_syllable)
+                )
+                lg_marks.append(self.L if laghu else self.G)
+                padanta_flags.append(False)
 
-        return syllables, lg_marks
+        return syllables, lg_marks, padanta_flags
 
     def _scan_line(self, line: str) -> Optional[Dict[str, Any]]:
-        """Scan line, return syllables, marks and clean LG string."""
+        """Scan line, return syllables, marks, padanta flags, and clean LG string."""
         clean_line = skt.clean(line).strip()
         if not clean_line:
             return None
 
-        syllables, lg_marks = self.mark_lg(clean_line)
+        syllables, lg_marks, padanta_flags = self.mark_lg(clean_line)
         lg_str = ''.join(self.input_map.get(m, m) for m in lg_marks if m)
         if not lg_str:
             return None
+
+        # Build Padanta-elevated alternative string (where last L is treated as G)
+        alt_lg_str = lg_str
+        if lg_str and lg_str[-1] == self.L:
+            alt_lg_str = lg_str[:-1] + self.G
 
         return {
             'line': clean_line,
             'syllables': syllables,
             'lg_marks': lg_marks,
-            'lg_str': lg_str
+            'padanta_flags': padanta_flags,
+            'lg_str': lg_str,
+            'alt_lg_str': alt_lg_str
         }
 
     def lg_to_gana(self, lg_str: str) -> str:
@@ -486,16 +505,22 @@ class Chanda:
     # Direct & Regex Matching
     ###########################################################################
 
-    def _lookup_lg(self, lg_str: str, dictionary: Dict[str, Any]) -> Tuple[str, List, bool]:
+    def _lookup_lg(self, lg_str: str, dictionary: Dict[str, Any], alt_lg_str: Optional[str] = None) -> Tuple[str, List, bool, bool]:
+        """
+        Lookup in meter dictionary. Checks natural lg_str and Padanta-promoted alt_lg_str.
+        Returns: (matched_lg, chanda_list, found, used_padanta)
+        """
         if lg_str in dictionary:
-            return lg_str, dictionary[lg_str], True
+            return lg_str, dictionary[lg_str], True, False
+        if alt_lg_str and alt_lg_str in dictionary:
+            return alt_lg_str, dictionary[alt_lg_str], True, True
         if lg_str:
             last = lg_str[-1]
             alt_last = self.G if last == self.L else self.L
-            alt_lg = lg_str[:-1] + alt_last
-            if alt_lg in dictionary:
-                return alt_lg, dictionary[alt_lg], True
-        return lg_str, [], False
+            flipped_lg = lg_str[:-1] + alt_last
+            if flipped_lg in dictionary:
+                return flipped_lg, dictionary[flipped_lg], True, True
+        return lg_str, [], False, False
 
     def find_direct_match(self, line: str, multi: bool = False) -> Optional[Dict[str, Any]]:
         scan = self._scan_line(line)
@@ -503,7 +528,9 @@ class Chanda:
             return None
 
         dictionary = self.MULTI_CHANDA if multi else self.SINGLE_CHANDA
-        match_lg, chanda_list, found = self._lookup_lg(scan['lg_str'], dictionary)
+        match_lg, chanda_list, found, used_padanta = self._lookup_lg(
+            scan['lg_str'], dictionary, alt_lg_str=scan.get('alt_lg_str')
+        )
 
         chanda = []
         jaati = []
@@ -516,7 +543,7 @@ class Chanda:
 
         if not multi:
             jaati = self.JAATI.get(len(match_lg), self.JAATI.get(-1, ('अज्ञात',)))
-            gana = [self.lg_to_gana(match_lg)]
+            gana = [self.lg_to_gana(scan['lg_str'])]
             length = [str(len(match_lg))]
             matra = [str(self.count_matra(match_lg))]
         elif found:
@@ -528,51 +555,28 @@ class Chanda:
                 ) + ")"
                 for split_group in splits
             ]
-            gana = [
-                f"({', '.join(self.lg_to_gana(s) for s in split_group)})"
-                for split_group in splits
-            ]
+            # Always return continuous clean ganas aligned with the line
+            gana = [self.lg_to_gana(scan['lg_str'])]
             length = [
-                f"({' + '.join(str(len(s)) for s in split_group)})"
+                f"({' + '.join(str(len(split)) for split in split_group)})"
                 for split_group in splits
             ]
             matra = [
-                f"({' + '.join(str(self.count_matra(s)) for s in split_group)})"
+                f"({' + '.join(str(self.count_matra(split)) for split in split_group)})"
                 for split_group in splits
             ]
 
         return {
             'found': found,
+            'used_padanta': used_padanta,
             'syllables': scan['syllables'],
             'lg': scan['lg_marks'],
+            'padanta_flags': scan['padanta_flags'],
             'gana': gana,
             'chanda': chanda,
             'jaati': list(jaati),
             'length': length,
             'matra': matra
-        }
-
-    def find_matra_match(self, matra_counts: Tuple[int, ...]) -> Dict[str, Any]:
-        found = matra_counts in self.MATRA_CHANDA
-        chanda = []
-        if found:
-            chanda = self.MATRA_CHANDA.get(matra_counts, [])
-        elif len(matra_counts) == 2:
-            collapsed = []
-            for pattern, meters in self.MATRA_CHANDA.items():
-                if len(pattern) == 4 and (pattern[0] + pattern[1], pattern[2] + pattern[3]) == matra_counts:
-                    collapsed.extend(meters)
-            if collapsed:
-                found = True
-                chanda = collapsed
-
-        matra_str = '-'.join(str(m) for m in matra_counts)
-        return {
-            'found': found,
-            'chanda': chanda,
-            'matra_pattern': matra_counts,
-            'matra_display': matra_str,
-            'is_matra_vrtta': True
         }
 
     ###########################################################################
@@ -679,8 +683,9 @@ class Chanda:
 
         scan = self._scan_line(line)
         lg_str = scan['lg_str'] if scan else ''
+        alt_lg_str = scan.get('alt_lg_str', lg_str) if scan else ''
 
-        regex_matches = [rk for rk in self.CHANDA if re.match(f'^{rk}$', lg_str)]
+        regex_matches = [rk for rk in self.CHANDA if re.match(f'^{rk}$', lg_str) or re.match(f'^{rk}$', alt_lg_str)]
         if regex_matches:
             found = True
         is_regex_match = bool(regex_matches)
@@ -710,16 +715,37 @@ class Chanda:
                     if c not in chanda
                 ]
 
+        # Natural LG list
         full_lg = [self.output_map.get(c, c) for c in direct_match['lg']]
+        padanta_flags = direct_match.get('padanta_flags', [])
+
+        # Display LG marks with Padanta annotation
+        display_lg = []
+        display_lg_classes = []
+        for idx, m in enumerate(direct_match['lg']):
+            if not m:
+                display_lg.append('')
+                display_lg_classes.append('')
+                continue
+            is_padanta = (idx < len(padanta_flags) and padanta_flags[idx])
+            dev_char = self.output_map.get(m, m)
+            if is_padanta:
+                display_lg.append(f"{dev_char}*")
+                display_lg_classes.append('cell-padanta')
+            else:
+                display_lg.append(dev_char)
+                display_lg_classes.append('cell-laghu' if m == self.L else 'cell-guru')
+
         full_length = len(lg_str)
         full_matra = self.count_matra(lg_str)
+        
+        # Always compute pure continuous Gaṇas aligned with the line
         full_gana = self.lg_to_gana(lg_str).translate(self.ttable_out)
         full_jaati = self.JAATI.get(len(lg_str), self.JAATI.get(-1, ('अज्ञात',)))
 
         display_line = line
         display_syllables = [s for ln in direct_match['syllables'] for w in ln for s in w]
-        display_lg = full_lg
-        display_gana = ' / '.join(gana).translate(self.ttable_out) if gana else full_gana
+        display_gana = full_gana
         display_length = ' / '.join(length) if length else full_length
         display_matra = ' / '.join(matra) if matra else full_matra
         display_chanda = ' / '.join(self.format_chanda_pada(c, p) for c, p in chanda)
@@ -728,6 +754,8 @@ class Chanda:
         answer['found'] = found
         answer['syllables'] = display_syllables
         answer['lg'] = full_lg
+        answer['raw_lg'] = [self.output_map.get(m, m) for m in direct_match['lg'] if m]
+        answer['padanta_flags'] = padanta_flags
         answer['gana'] = full_gana
         answer['length'] = full_length
         answer['matra'] = full_matra
@@ -738,6 +766,7 @@ class Chanda:
         answer['display_line'] = display_line
         answer['display_syllables'] = display_syllables
         answer['display_lg'] = display_lg
+        answer['display_lg_classes'] = display_lg_classes
         answer['display_gana'] = display_gana
         answer['display_length'] = display_length
         answer['display_matra'] = display_matra
@@ -770,16 +799,11 @@ class Chanda:
     ###########################################################################
 
     def _check_upajati_hybrid(self, line_results: List[Dict[str, Any]], verse_lines: List[int]) -> Optional[Tuple[List[str], float, str]]:
-        """
-        Check if the lines in a verse form an Upajāti (combination of Indravajrā + Upendravajrā,
-        or Vaṃśastha + Indravaṃśā).
-        """
         if len(verse_lines) < 2:
             return None
 
-        tristubh_padas = [] # True for Upendra (starts Laghu), False for Indra (starts Guru)
+        tristubh_padas = []
         is_all_tristubh = True
-        is_mixed_tristubh = False
 
         jagati_padas = []
         is_all_jagati = True
@@ -788,22 +812,19 @@ class Chanda:
             res = line_results[l_idx]['result']
             m_names = [c[0] for c in res.get('chanda', [])]
             
-            # Check 11-syllable Triṣṭubh (Indravajrā or Upendravajrā)
             is_indra = ('इन्द्रवज्रा' in m_names)
             is_upendra = ('उपेन्द्रवज्रा' in m_names)
             
             if is_indra or is_upendra:
                 tristubh_padas.append(is_upendra)
             else:
-                # Check fuzzy or close pattern (11 syllables, matching tail)
                 lg_marks = [m for m in res.get('lg', []) if m]
                 if len(lg_marks) == 11:
-                    first_is_laghu = (lg_marks[0] in ['ल', 'L'])
+                    first_is_laghu = (lg_marks[0] in ['ल', 'L', 'ल*'])
                     tristubh_padas.append(first_is_laghu)
                 else:
                     is_all_tristubh = False
 
-            # Check 12-syllable Jagatī (Vaṃśastha or Indravaṃśā)
             is_vamsastha = ('वंशस्थ' in m_names)
             is_indravamsa = ('इन्द्रवंशा' in m_names)
             if is_vamsastha or is_indravamsa:
@@ -811,7 +832,6 @@ class Chanda:
             else:
                 is_all_jagati = False
 
-        # 11-syllable Triṣṭubh Upajāti
         if is_all_tristubh and len(tristubh_padas) == 4:
             has_indra = False in tristubh_padas
             has_upendra = True in tristubh_padas
@@ -824,7 +844,6 @@ class Chanda:
                 detail = f" ({', '.join(pada_desc)})"
                 return ([sub_name, "उपजाति (इन्द्रवज्रा + उपेन्द्रवज्रा)"], 4.0, detail)
 
-        # 12-syllable Jagatī Upajāti
         if is_all_jagati and len(jagati_padas) == 4:
             has_vam = True in jagati_padas
             has_ind = False in jagati_padas
@@ -888,7 +907,6 @@ class Chanda:
                 line_count += 1
 
                 if line_count % 4 == 0 or line_idx == len(line_results) - 1:
-                    # First check Upajāti hybrid detection
                     upajati_match = self._check_upajati_hybrid(line_results, verse_result['lines'])
                     if upajati_match:
                         best_matches = (upajati_match[0], upajati_match[1])
@@ -906,7 +924,6 @@ class Chanda:
                     verse_result['scores'] = verse_scores
                     verse_result['chanda'] = best_matches
 
-                    # Reorder fuzzy matches in the verse lines to prioritize winning meter
                     for _line_idx in verse_result['lines']:
                         lr = line_results[_line_idx]['result']
                         if not lr.get('found') and lr.get('fuzzy'):
@@ -934,7 +951,6 @@ class Chanda:
             'verse': verse_results
         }
 
-        # Format simple text scansion for export
         simple_result = []
         if verse:
             for v_idx, verse_res in enumerate(verse_results, 1):
@@ -982,13 +998,9 @@ class Chanda:
     ###########################################################################
 
     def get_meter_template(self, meter_name: str) -> Optional[Dict[str, Any]]:
-        """Return metric blueprint for composition assistant."""
         return STANDARD_METER_TEMPLATES.get(meter_name)
 
     def evaluate_composition(self, meter_name: str, line_text: str) -> Dict[str, Any]:
-        """
-        Evaluate line against a target meter template for live composition assistance.
-        """
         tpl = self.get_meter_template(meter_name)
         if not tpl:
             return {'error': f"Meter '{meter_name}' not found in composition catalog"}
@@ -1023,11 +1035,14 @@ class Chanda:
                 exp = target_lg[i]
                 if exp == '-' or exp == curr:
                     matches.append(i)
+                elif i == target_len - 1 and curr == 'ल' and exp == 'ग':
+                    # Padanta-Guru promotion allowed on final syllable
+                    matches.append(i)
                 else:
                     mismatches.append(i)
                     is_valid = False
             else:
-                mismatches.append(i) # Extra syllable
+                mismatches.append(i)
                 is_valid = False
 
         complete = (len(current_lg) == target_len and is_valid)

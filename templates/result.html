@@ -54,6 +54,14 @@
     {% set verse_loop = loop %}
     {% set verse_id = verse_loop.index %}
     {% set output_scheme = data.output_scheme or verse_result.scheme %}
+    {% set verse_lg_marks = [] %}
+    {% for l_idx in verse_result['lines'] %}
+        {% set l_ans = data.result.line[l_idx] %}
+        {% if l_ans and l_ans.result and l_ans.result.raw_lg %}
+            {% set _ = verse_lg_marks.extend(l_ans.result.raw_lg) %}
+        {% endif %}
+    {% endfor %}
+
     <div class="card card-verse mb-3">
         <div class="card-header d-flex justify-content-between align-items-center bg-light">
             <div>
@@ -69,9 +77,14 @@
                     <span class="badge badge-secondary ml-2">Score: {{verse_result['chanda'][1]}}</span>
                 {% endif %}
             </div>
-            <button data-toggle="collapse" data-target=".multi-collapse-{{verse_id}}" aria-controls="verse-lines-{{verse_id}} verse-scansion-{{verse_id}}" data-custom-multi-toggle-text="Hide Scansion" data-custom-default-class="btn-info" data-custom-multi-toggle-class="btn-secondary" class="btn btn-sm shadow-sm">
-                Show Scansion
-            </button>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-primary btn-play-rhythm shadow-sm mr-2" data-lg="{{verse_lg_marks | tojson}}" title="Play Metrical Percussion Rhythm for Entire Verse">
+                    <i class="fas fa-play mr-1"></i> Play Verse
+                </button>
+                <button data-toggle="collapse" data-target=".multi-collapse-{{verse_id}}" aria-controls="verse-lines-{{verse_id}} verse-scansion-{{verse_id}}" data-custom-multi-toggle-text="Hide Scansion" data-custom-default-class="btn-info" data-custom-multi-toggle-class="btn-secondary" class="btn btn-sm shadow-sm">
+                    Show Scansion
+                </button>
+            </div>
         </div>
         <div id="verse-lines-{{verse_id}}" class="card-body collapse show multi-collapse-{{verse_id}} sanskrit-text bg-white py-3">
             {% for line_idx in verse_result['lines'] %}

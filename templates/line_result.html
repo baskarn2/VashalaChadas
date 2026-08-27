@@ -2,7 +2,7 @@
 {% set output_scheme = data.output_scheme or line_result.display_scheme %}
 
 <div class="table-responsive my-2">
-<table class="table table-sm table-bordered text-center table-scansion mx-auto mb-2">
+<table class="table table-sm table-bordered text-center table-scansion mx-auto mb-2" id="scansion-table-{{line_id}}">
     <!-- Syllables row -->
     <tr class="sanskrit-text">
         <th class="text-left bg-light text-nowrap" style="width: 130px;">Akṣarāṇi</th>
@@ -10,17 +10,17 @@
             <td class="font-weight-bold">{{s | transliterate(output_scheme)}}</td>
         {% endfor %}
     </tr>
-    <!-- Laghu-Guru row -->
+    <!-- Laghu-Guru row with Padanta-Guru Highlight -->
     <tr>
         <th class="text-left bg-light text-nowrap">Laghu-Guru</th>
         {% for lg_mark in line_result.display_lg %}
-            <td class="{% if lg_mark == 'ल' or lg_mark == 'L' %}cell-laghu{% elif lg_mark == 'ग' or lg_mark == 'G' %}cell-guru{% endif %}">
+            {% set cell_class = line_result.display_lg_classes[loop.index0] if line_result.display_lg_classes else ('cell-laghu' if (lg_mark == 'ल' or lg_mark == 'L') else ('cell-guru' if (lg_mark == 'ग' or lg_mark == 'G') else '')) %}
+            <td class="{{cell_class}}" {% if cell_class == 'cell-padanta' %}data-toggle="tooltip" data-placement="top" title="Pādānta-Guru Rule: Naturally Laghu at verse/quarter end, counted as Guru in meter"{% endif %}>
                 {{lg_mark | transliterate(output_scheme)}}
             </td>
         {% endfor %}
     </tr>
-    <!-- Gana row -->
-    {% if line_result.gana == line_result.display_gana %}
+    <!-- Gana row: Always clean triad cells aligned with syllables -->
     <tr>
         <th class="text-left bg-light text-nowrap">Gaṇa</th>
         {% set counter = namespace(gana_idx=0, written_count=0, colspan=0, letters=0) %}
@@ -45,14 +45,6 @@
             {% endif %}
         {% endfor %}
     </tr>
-    {% else %}
-    <tr>
-        <th class="text-left bg-light text-nowrap">Gaṇa</th>
-        <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-3 cell-gana">
-            {{line_result.display_gana | transliterate(output_scheme)}}
-        </td>
-    </tr>
-    {% endif %}
     <!-- Counts row -->
     <tr>
         <th class="text-left bg-light text-nowrap">Counts</th>
@@ -65,7 +57,12 @@
                 {% set string_morae = "मात्राः" | transliterate(output_scheme) %}
             {% endif %}
             <span class="badge badge-secondary px-2 py-1 mr-2">{{line_result.display_length}} {{string_syllables}}</span>
-            <span class="badge badge-secondary px-2 py-1">{{line_result.display_matra}} {{string_morae}}</span>
+            <span class="badge badge-secondary px-2 py-1 mr-2">{{line_result.display_matra}} {{string_morae}}</span>
+            {% if line_result.padanta_flags and true in line_result.padanta_flags %}
+                <span class="badge badge-padanta px-2 py-1" data-toggle="tooltip" title="Final syllable follows the Pādānta-Guru rule (पादस्यान्ते द्विरूपत्वम्)">
+                    <i class="fas fa-asterisk mr-1"></i>Pādānta-Guru Rule Applied
+                </span>
+            {% endif %}
         </td>
     </tr>
     <!-- Jati row -->
@@ -75,26 +72,35 @@
             {{line_result.display_jaati | transliterate(output_scheme)}}
         </td>
     </tr>
-    <!-- Chanda row -->
+    <!-- Chanda row with Play Rhythm Button -->
     <tr>
         <th class="text-left bg-light text-nowrap">Chanda</th>
         <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-3">
-        {% if line_result.found %}
-            <span class="badge badge-meter mr-2">{{line_result.display_chanda | transliterate(output_scheme)}}</span>
-        {% else %}
-            {% if line_result.fuzzy %}
-                <span class="text-warning font-weight-bold mr-2">
-                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                    {{line_result.fuzzy[0]["display_chanda"] | transliterate(output_scheme)}} 
-                    <span class="badge badge-warning text-dark ml-1">({{line_result.fuzzy[0]["cost"]}} {% if line_result.fuzzy[0]["cost"] == 1 %}edit{% else %}edits{% endif %})</span>
-                </span>
-                <button data-toggle="collapse" data-target="#fuzzy-{{line_id}}" data-custom-toggle-text="- Hide Fuzzy" data-custom-default-class="btn-info" data-custom-toggle-class="btn-secondary" class="btn btn-sm btn-info float-right shadow-sm">
-                    + Fuzzy Suggestions
-                </button>
-            {% else %}
-                <span class="text-danger font-weight-bold"><i class="fas fa-times-circle mr-1"></i>Meter Not Found</span>
-            {% endif %}
-        {% endif %}
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                {% if line_result.found %}
+                    <span class="badge badge-meter mr-2">{{line_result.display_chanda | transliterate(output_scheme)}}</span>
+                {% else %}
+                    {% if line_result.fuzzy %}
+                        <span class="text-warning font-weight-bold mr-2">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            {{line_result.fuzzy[0]["display_chanda"] | transliterate(output_scheme)}} 
+                            <span class="badge badge-warning text-dark ml-1">({{line_result.fuzzy[0]["cost"]}} {% if line_result.fuzzy[0]["cost"] == 1 %}edit{% else %}edits{% endif %})</span>
+                        </span>
+                        <button data-toggle="collapse" data-target="#fuzzy-{{line_id}}" data-custom-toggle-text="- Hide Fuzzy" data-custom-default-class="btn-info" data-custom-toggle-class="btn-secondary" class="btn btn-sm btn-info shadow-sm">
+                            + Fuzzy Suggestions
+                        </button>
+                    {% else %}
+                        <span class="text-danger font-weight-bold"><i class="fas fa-times-circle mr-1"></i>Meter Not Found</span>
+                    {% endif %}
+                {% endif %}
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-primary btn-play-rhythm shadow-sm" data-lg="{{line_result.raw_lg | tojson}}" data-target-table="#scansion-table-{{line_id}}" title="Play Metrical Percussion Rhythm">
+                        <i class="fas fa-play mr-1"></i> Play Rhythm
+                    </button>
+                </div>
+            </div>
         </td>
     </tr>
 </table>
