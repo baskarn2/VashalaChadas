@@ -27,12 +27,7 @@
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <span class="font-weight-bold text-dark"><i class="fas fa-bullseye mr-2 text-primary"></i>Target Meter (छन्दो-निर्वाचनम्)</span>
-                    <div>
-                        <button type="button" class="btn btn-sm btn-outline-primary shadow-sm mr-2" id="btn-play-target-meter">
-                            <i class="fas fa-volume-up mr-1"></i> Play Meter Cadence
-                        </button>
-                        <span class="badge badge-pill badge-primary px-3 py-1" id="active-meter-badge">इन्द्रवज्रा (11 Akṣaras)</span>
-                    </div>
+                    <span class="badge badge-pill badge-primary px-3 py-1" id="active-meter-badge">इन्द्रवज्रा (11 Akṣaras)</span>
                 </div>
                 <div class="card-body p-4">
                     <div class="row align-items-center mb-3">
@@ -176,9 +171,6 @@
                             <button type="button" class="btn btn-success px-4 mr-2 shadow-sm" id="btn-copy-verse">
                                 <i class="fas fa-copy mr-1"></i> Copy Full Verse
                             </button>
-                            <button type="button" class="btn btn-outline-primary mr-2" id="btn-play-composed-verse">
-                                <i class="fas fa-play mr-1"></i> Play Composed Verse Rhythm
-                            </button>
                             <button type="button" class="btn btn-outline-secondary" id="btn-send-to-analyzer">
                                 <i class="fas fa-external-link-alt mr-1"></i> Open in Full Analyzer
                             </button>
@@ -287,7 +279,6 @@ const SAMPLE_VERSES = {
 };
 
 let currentMeterKey = "इन्द्रवज्रा";
-let currentPadaLG = { 1: [], 2: [], 3: [], 4: [] };
 
 function updateMeterDetails(meterKey) {
     currentMeterKey = meterKey;
@@ -316,7 +307,6 @@ function evaluatePada(padaIndex) {
     const targetLen = pattern.length;
 
     if (!text) {
-        currentPadaLG[padaIndex] = [];
         $(`#pada-status-${padaIndex}`).html('<span class="text-muted">Empty (0/' + targetLen + ')</span>');
         renderSlots(padaIndex, [], targetLG, null, targetLen);
         checkOverallStatus();
@@ -341,8 +331,6 @@ function evaluatePada(padaIndex) {
                 const nextExp = data.next_expected;
                 const remaining = data.remaining;
                 const complete = data.complete;
-
-                currentPadaLG[padaIndex] = currLG;
 
                 if (complete) {
                     $(`#pada-status-${padaIndex}`).html('<span class="text-success font-weight-bold"><i class="fas fa-check-circle mr-1"></i>Perfect Match! (' + syls.length + '/' + targetLen + ')</span>');
@@ -496,37 +484,6 @@ $(document).ready(function() {
         form.append('<input type="hidden" name="text_mode" value="verse">');
         $('body').append(form);
         form.submit();
-    });
-
-    // Play Target Meter Cadence
-    $('#btn-play-target-meter').click(function() {
-        const tpl = METER_DATA[currentMeterKey];
-        if (!tpl || !tpl.pattern) return;
-        const lgArray = tpl.pattern.replace(/L/g, 'ल').replace(/G/g, 'ग').replace(/-/g, 'ल').split('');
-        if (window.meterPlayer) {
-            window.meterPlayer.play(lgArray, {
-                $btn: $(this)
-            });
-        }
-    });
-
-    // Play Composed Verse Rhythm
-    $('#btn-play-composed-verse').click(function() {
-        let fullLG = [];
-        for (let p = 1; p <= 4; p++) {
-            if (currentPadaLG[p] && currentPadaLG[p].length) {
-                fullLG = fullLG.concat(currentPadaLG[p]);
-            }
-        }
-        if (fullLG.length === 0) {
-            if ($.notify) $.notify({ message: "Please compose some syllables first!" }, { type: "warning" });
-            return;
-        }
-        if (window.meterPlayer) {
-            window.meterPlayer.play(fullLG, {
-                $btn: $(this)
-            });
-        }
     });
 
     updateMeterDetails("इन्द्रवज्रा");

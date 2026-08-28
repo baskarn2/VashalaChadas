@@ -188,17 +188,6 @@ body {
   margin-top: 3rem;
 }
 
-/* Audio Playback Cell Highlight */
-.cell-playing {
-    background-color: #fef08a !important;
-    color: #854d0e !important;
-    box-shadow: 0 0 10px rgba(234, 179, 8, 0.8) !important;
-    transform: scale(1.15);
-    z-index: 10;
-    transition: all 0.1s ease-in-out;
-    border: 2px solid #ca8a04 !important;
-}
-
 /* Padanta Guru Special Style */
 .cell-padanta {
     background-color: #ede9fe !important;
@@ -219,8 +208,3 @@ body {
     color: #ffffff;
 }
 
-/* Play Rhythm Button */
-.btn-play-rhythm {
-    font-weight: 600;
-    transition: all 0.2s ease;
-}

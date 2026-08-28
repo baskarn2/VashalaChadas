@@ -72,34 +72,27 @@
             {{line_result.display_jaati | transliterate(output_scheme)}}
         </td>
     </tr>
-    <!-- Chanda row with Play Rhythm Button -->
+    <!-- Chanda row -->
     <tr>
         <th class="text-left bg-light text-nowrap">Chanda</th>
         <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-3">
-            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                <div>
-                {% if line_result.found %}
-                    <span class="badge badge-meter mr-2">{{line_result.display_chanda | transliterate(output_scheme)}}</span>
-                {% else %}
-                    {% if line_result.fuzzy %}
-                        <span class="text-warning font-weight-bold mr-2">
-                            <i class="fas fa-exclamation-triangle mr-1"></i>
-                            {{line_result.fuzzy[0]["display_chanda"] | transliterate(output_scheme)}} 
-                            <span class="badge badge-warning text-dark ml-1">({{line_result.fuzzy[0]["cost"]}} {% if line_result.fuzzy[0]["cost"] == 1 %}edit{% else %}edits{% endif %})</span>
-                        </span>
-                        <button data-toggle="collapse" data-target="#fuzzy-{{line_id}}" data-custom-toggle-text="- Hide Fuzzy" data-custom-default-class="btn-info" data-custom-toggle-class="btn-secondary" class="btn btn-sm btn-info shadow-sm">
-                            + Fuzzy Suggestions
-                        </button>
-                    {% else %}
-                        <span class="text-danger font-weight-bold"><i class="fas fa-times-circle mr-1"></i>Meter Not Found</span>
-                    {% endif %}
-                {% endif %}
-                </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-primary btn-play-rhythm shadow-sm" data-lg="{{line_result.raw_lg | tojson}}" data-target-table="#scansion-table-{{line_id}}" title="Play Metrical Percussion Rhythm">
-                        <i class="fas fa-play mr-1"></i> Play Rhythm
+            <div>
+            {% if line_result.found %}
+                <span class="badge badge-meter mr-2">{{line_result.display_chanda | transliterate(output_scheme)}}</span>
+            {% else %}
+                {% if line_result.fuzzy %}
+                    <span class="text-warning font-weight-bold mr-2">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        {{line_result.fuzzy[0]["display_chanda"] | transliterate(output_scheme)}} 
+                        <span class="badge badge-warning text-dark ml-1">({{line_result.fuzzy[0]["cost"]}} {% if line_result.fuzzy[0]["cost"] == 1 %}edit{% else %}edits{% endif %})</span>
+                    </span>
+                    <button data-toggle="collapse" data-target="#fuzzy-{{line_id}}" data-custom-toggle-text="- Hide Fuzzy" data-custom-default-class="btn-info" data-custom-toggle-class="btn-secondary" class="btn btn-sm btn-info float-right shadow-sm">
+                        + Fuzzy Suggestions
                     </button>
-                </div>
+                {% else %}
+                    <span class="text-danger font-weight-bold"><i class="fas fa-times-circle mr-1"></i>Meter Not Found</span>
+                {% endif %}
+            {% endif %}
             </div>
         </td>
     </tr>
