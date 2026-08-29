@@ -78,17 +78,21 @@ body {
 }
 
 .table-scansion th {
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: #f8fafc;
+  color: #334155;
   font-weight: 600;
-  width: 140px;
+  width: 100px;
   vertical-align: middle;
-  border-color: #e5e7eb;
+  border-color: #e2e8f0;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
 }
 
 .table-scansion td {
   vertical-align: middle;
-  border-color: #e5e7eb;
+  border-color: #e2e8f0;
+  padding: 0.25rem 0.35rem;
+  text-align: center;
 }
 
 .cell-laghu {
@@ -107,7 +111,6 @@ body {
   background-color: var(--gana-bg) !important;
   color: var(--gana-color) !important;
   font-weight: 600;
-  letter-spacing: 1px;
 }
 
 .card-verse {
@@ -192,19 +195,13 @@ body {
 .cell-padanta {
     background-color: #ede9fe !important;
     color: #5b21b6 !important;
-    border: 2px dashed #7c3aed !important;
-    position: relative;
+    border: 1px dashed #7c3aed !important;
     font-weight: 700;
-}
-.cell-padanta::after {
-    content: " (गुरु)";
-    font-size: 0.65rem;
-    display: block;
-    color: #6d28d9;
 }
 
 .badge-padanta {
     background-color: #7c3aed;
     color: #ffffff;
 }
+
 

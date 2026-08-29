@@ -1,21 +1,21 @@
 {% if line_result %}
 {% set output_scheme = data.output_scheme or line_result.display_scheme %}
 
-<div class="table-responsive my-2">
-<table class="table table-sm table-bordered text-center table-scansion mx-auto mb-2" id="scansion-table-{{line_id}}">
+<div class="table-responsive my-1">
+<table class="table table-sm table-bordered table-striped text-center table-scansion mx-auto mb-2" id="scansion-table-{{line_id}}">
     <!-- Syllables row -->
     <tr class="sanskrit-text">
-        <th class="text-left bg-light text-nowrap" style="width: 130px;">Akṣarāṇi</th>
+        <th class="text-left bg-light text-nowrap" style="width: 100px;">Akṣarāṇi</th>
         {% for s in line_result.display_syllables %}
-            <td class="font-weight-bold">{{s | transliterate(output_scheme)}}</td>
+            <td class="text-center font-weight-bold px-1">{{s | transliterate(output_scheme)}}</td>
         {% endfor %}
     </tr>
-    <!-- Laghu-Guru row with Padanta-Guru Highlight -->
+    <!-- Laghu-Guru row -->
     <tr>
         <th class="text-left bg-light text-nowrap">Laghu-Guru</th>
         {% for lg_mark in line_result.display_lg %}
             {% set cell_class = line_result.display_lg_classes[loop.index0] if line_result.display_lg_classes else ('cell-laghu' if (lg_mark == 'ल' or lg_mark == 'L') else ('cell-guru' if (lg_mark == 'ग' or lg_mark == 'G') else '')) %}
-            <td class="{{cell_class}}" {% if cell_class == 'cell-padanta' %}data-toggle="tooltip" data-placement="top" title="Pādānta-Guru Rule: Naturally Laghu at verse/quarter end, counted as Guru in meter"{% endif %}>
+            <td class="text-center px-1 {{cell_class}}" {% if cell_class == 'cell-padanta' %}data-toggle="tooltip" data-placement="top" title="Pādānta-Guru: Naturally Laghu at pāda end, counted as Guru"{% endif %}>
                 {{lg_mark | transliterate(output_scheme)}}
             </td>
         {% endfor %}
@@ -27,12 +27,12 @@
         {% for lg_mark in line_result.lg %}
             {% set counter.colspan = counter.colspan + 1 %}
             {% if counter.written_count + 3 > line_result.length %}
-                <td class="text-muted small">{{lg_mark | transliterate(output_scheme)}}</td>
+                <td class="text-center text-muted small px-1">{{lg_mark | transliterate(output_scheme)}}</td>
             {% endif %}
             {% if lg_mark %}
                 {% set counter.letters = counter.letters + 1 %}
                 {% if counter.letters == 3 %}
-                    <td class="cell-gana font-weight-bold" colspan="{{counter.colspan}}">
+                    <td class="text-center cell-gana font-weight-bold px-1" colspan="{{counter.colspan}}">
                         {% if counter.gana_idx < line_result.gana|length %}
                             {{line_result.gana[counter.gana_idx] | transliterate(output_scheme)}}
                         {% endif %}
@@ -48,7 +48,7 @@
     <!-- Counts row -->
     <tr>
         <th class="text-left bg-light text-nowrap">Counts</th>
-        <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-3">
+        <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-2">
             {% if output_scheme and output_scheme not in ["devanagari", "iast", "slp1", "wx", "hk", "itrans"] %}
                 {% set string_syllables = "syllables" %}
                 {% set string_morae = "morae" %}
@@ -60,7 +60,7 @@
             <span class="badge badge-secondary px-2 py-1 mr-2">{{line_result.display_matra}} {{string_morae}}</span>
             {% if line_result.padanta_flags and true in line_result.padanta_flags %}
                 <span class="badge badge-padanta px-2 py-1" data-toggle="tooltip" title="Final syllable follows the Pādānta-Guru rule (पादस्यान्ते द्विरूपत्वम्)">
-                    <i class="fas fa-asterisk mr-1"></i>Pādānta-Guru Rule Applied
+                    Pādānta-Guru Rule
                 </span>
             {% endif %}
         </td>
@@ -68,14 +68,14 @@
     <!-- Jati row -->
     <tr>
         <th class="text-left bg-light text-nowrap">Jāti</th>
-        <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-3 font-weight-bold text-dark">
+        <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-2 font-weight-bold text-dark">
             {{line_result.display_jaati | transliterate(output_scheme)}}
         </td>
     </tr>
     <!-- Chanda row -->
     <tr>
         <th class="text-left bg-light text-nowrap">Chanda</th>
-        <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-3">
+        <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-2">
             <div>
             {% if line_result.found %}
                 <span class="badge badge-meter mr-2">{{line_result.display_chanda | transliterate(output_scheme)}}</span>
@@ -86,8 +86,8 @@
                         {{line_result.fuzzy[0]["display_chanda"] | transliterate(output_scheme)}} 
                         <span class="badge badge-warning text-dark ml-1">({{line_result.fuzzy[0]["cost"]}} {% if line_result.fuzzy[0]["cost"] == 1 %}edit{% else %}edits{% endif %})</span>
                     </span>
-                    <button data-toggle="collapse" data-target="#fuzzy-{{line_id}}" data-custom-toggle-text="- Hide Fuzzy" data-custom-default-class="btn-info" data-custom-toggle-class="btn-secondary" class="btn btn-sm btn-info float-right shadow-sm">
-                        + Fuzzy Suggestions
+                    <button data-toggle="collapse" data-target="#fuzzy-{{line_id}}" data-custom-toggle-text="- Hide Fuzzy" data-custom-default-class="btn-info" data-custom-toggle-class="btn-secondary" class="btn btn-sm btn-info float-right shadow-sm py-0 px-2">
+                        + Fuzzy
                     </button>
                 {% else %}
                     <span class="text-danger font-weight-bold"><i class="fas fa-times-circle mr-1"></i>Meter Not Found</span>

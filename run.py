@@ -38,10 +38,20 @@ def main():
 
     args = parser.parse_args()
 
-    url = f"http://{args.host}:{args.port}"
+    # Check if port is in use and pick next free port
+    import socket
+    actual_port = args.port
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        if s.connect_ex((args.host, actual_port)) == 0:
+            for p in [5050, 8080, 8000, 5001]:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s2:
+                    if s2.connect_ex((args.host, p)) != 0:
+                        actual_port = p
+                        break
+
+    url = f"http://{args.host}:{actual_port}"
     print("=" * 65)
     print("  विशालवृत्तावलिः (Viśālavṛttāvaliḥ) - Sanskrit Prosody Suite")
-    print("  Author: Balaji Baskaran")
     print(f"  Access URL: {url}")
     print("  Press Ctrl+C to stop the server")
     print("=" * 65)
@@ -49,7 +59,8 @@ def main():
     if not args.no_browser and not args.debug:
         open_browser_later(url)
 
-    app.run(host=args.host, port=args.port, debug=args.debug)
+    app.run(host=args.host, port=actual_port, debug=args.debug)
+
 
 
 if __name__ == '__main__':
