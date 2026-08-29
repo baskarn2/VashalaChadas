@@ -8,6 +8,7 @@ Handles Akṣara-gaṇa-vṛtta, Mātrā-vṛtta, Ardhasama-vṛtta, Viṣama-v�
 Upajāti hybrid detection, Pādānta-Guru metrical rule, and Poetic Composition.
 """
 
+import sys
 import os
 import re
 import csv
@@ -251,9 +252,15 @@ class Chanda:
 
     def __init__(self, data_path: Optional[str] = None, symbols: str = 'यरतनभजसमलग'):
         if data_path is None:
-            data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
-            if not os.path.exists(data_path):
-                data_path = os.path.join(os.path.dirname(__file__), 'data')
+            if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+                data_path = os.path.join(sys._MEIPASS, 'data')
+            elif os.environ.get('VISHALA_BASE_DIR'):
+                data_path = os.path.join(os.environ['VISHALA_BASE_DIR'], 'data')
+            else:
+                data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+                if not os.path.exists(data_path):
+                    data_path = os.path.join(os.path.dirname(__file__), 'data')
+
 
         self.data_path = data_path
         self.input_map = dict(zip(symbols, self.SYMBOLS))

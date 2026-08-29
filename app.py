@@ -21,10 +21,21 @@ from werkzeug.utils import secure_filename
 from indic_transliteration import sanscript
 from core.chanda import Chanda, STANDARD_METER_TEMPLATES
 
-# Base directory
-BASE_DIR = pathlib.Path(__file__).resolve().parent
+import sys
+
+# Base directory (supports both script mode and PyInstaller bundle mode)
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    BASE_DIR = pathlib.Path(sys._MEIPASS)
+    USER_WORK_DIR = pathlib.Path(os.path.dirname(sys.executable))
+elif os.environ.get('VISHALA_BASE_DIR'):
+    BASE_DIR = pathlib.Path(os.environ['VISHALA_BASE_DIR'])
+    USER_WORK_DIR = BASE_DIR
+else:
+    BASE_DIR = pathlib.Path(__file__).resolve().parent
+    USER_WORK_DIR = BASE_DIR
+
 DATA_DIR = BASE_DIR / "data"
-TMP_DIR = BASE_DIR / "tmp"
+TMP_DIR = USER_WORK_DIR / "tmp"
 PHOTOS_DIR = TMP_DIR / "photos"
 TEXTS_DIR = TMP_DIR / "texts"
 RESULTS_DIR = TMP_DIR / "results"
@@ -34,6 +45,7 @@ TMP_DIR.mkdir(parents=True, exist_ok=True)
 PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
 TEXTS_DIR.mkdir(parents=True, exist_ok=True)
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
 
 # Initialize Core Engine
 CHANDA = Chanda(data_path=str(DATA_DIR))
