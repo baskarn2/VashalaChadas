@@ -37,6 +37,8 @@ jobs:
           pyinstaller Vishalavrttavalih.spec
 
       - name: Package Windows ZIP Distribution
+        shell: pwsh
+        run: |
           Copy-Item README.md dist\Vishalavrttavalih\
           Copy-Item cleanup_uninstall.bat dist\Vishalavrttavalih\
           Compress-Archive -Path dist\Vishalavrttavalih\* -DestinationPath dist\Vishalavrttavalih-Windows-x64.zip -Force
