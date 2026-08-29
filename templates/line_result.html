@@ -72,13 +72,20 @@
             {{line_result.display_jaati | transliterate(output_scheme)}}
         </td>
     </tr>
-    <!-- Chanda row -->
+    <!-- Chanda row (shown once per line / when not hidden in verse mode) -->
+    {% if not hide_chanda_row %}
     <tr>
         <th class="text-left bg-light text-nowrap">Chanda</th>
         <td colspan="{{line_result.display_syllables | length}}" class="text-left pl-2">
             <div>
             {% if line_result.found %}
-                <span class="badge badge-meter mr-2">{{line_result.display_chanda | transliterate(output_scheme)}}</span>
+                {% set c_list = line_result.display_chanda.split(' / ') %}
+                {% if c_list | length > 2 %}
+                    <span class="badge badge-meter mr-1">{{ c_list[:2] | join(' / ') | transliterate(output_scheme) }}</span>
+                    <span class="badge badge-secondary" data-toggle="tooltip" title="{{ c_list[2:] | join(', ') | transliterate(output_scheme) }}">+{{ c_list | length - 2 }} more</span>
+                {% else %}
+                    <span class="badge badge-meter mr-2">{{line_result.display_chanda | transliterate(output_scheme)}}</span>
+                {% endif %}
             {% else %}
                 {% if line_result.fuzzy %}
                     <span class="text-warning font-weight-bold mr-2">
@@ -96,10 +103,11 @@
             </div>
         </td>
     </tr>
+    {% endif %}
 </table>
 </div>
 
-{% if not line_result.found and line_result.fuzzy %}
+{% if not line_result.found and line_result.fuzzy and not hide_chanda_row %}
 <div id="fuzzy-{{line_id}}" class="collapse mt-2 mb-3">
     <div class="card card-body border-warning bg-light p-2">
         <h6 class="font-weight-bold text-secondary mb-2"><i class="fas fa-search mr-1"></i>Close Fuzzy Matches (Probable Meters):</h6>
