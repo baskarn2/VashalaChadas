@@ -21,7 +21,12 @@ For Windows users with low technical expertise, you can run **विशालव
    - Open the extracted folder and double-click **`Vishalavrttavalih.exe`**.
    - The application will automatically launch in its own desktop window!
 
+### Uninstallation & Cleaning Old Versions:
+- Double-click **`cleanup_uninstall.bat`** in the application folder.
+- It will stop any running instances, clean caches/temporary files, and completely remove the folder.
+
 ---
+
 
 ## 💻 Running from Source (Windows / macOS / Linux)
 
